@@ -16,7 +16,7 @@ Toda sesión debe incluir:
 1. Resultado u objetivo observable.
 2. Inicio: activación, contexto y objetivo; indicar duración.
 3. Desarrollo: explicación clara de cada concepto, ejemplo práctico guiado y práctica acompañada; indicar duración.
-4. Cierre: comprobación, síntesis y evidencia; indicar duración.
+4. Cierre: comprobación, síntesis y evidencia; indicar duración. Al finalizar el trabajo autónomo, debe cerrar con el commit y el push al repositorio remoto.
 5. Ejemplo práctico guiado, separado del trabajo autónomo.
 6. Trabajo integrador incremental autónomo, vinculado al contenido de esa sesión.
 
@@ -35,7 +35,7 @@ No proponer ejercicios desvinculados del proyecto ni versionar el ejemplo guiado
 
 ## Git y GitHub
 
-El commit y push se hacen únicamente al terminar el trabajo autónomo de cada sesión. El ejemplo guiado es parte del aprendizaje, no de la evidencia.
+El cierre de cada sesión debe evidenciar el avance autónomo en el repositorio remoto: al terminar el trabajo autónomo, el estudiante verifica el resultado, crea un commit descriptivo y ejecuta push. El ejemplo guiado es parte del aprendizaje y no se versiona como evidencia independiente.
 
 ```bash
 git status
@@ -44,7 +44,7 @@ git commit -m "mensaje sugerido para el avance autónomo"
 git push origin main
 ```
 
-Cada sesión debe proponer un mensaje de commit descriptivo. El historial de GitHub es evidencia del avance continuo.
+Cada sesión debe proponer un mensaje de commit descriptivo. El historial remoto de GitHub es la evidencia obligatoria del avance continuo de cada sesión.
 
 ## Codelabs
 

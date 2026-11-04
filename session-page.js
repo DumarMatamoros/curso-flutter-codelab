@@ -90,6 +90,29 @@ function addCodeControls(scope) {
   });
 }
 
+let syntaxHighlighterLoading;
+
+function enhanceCodeBlocks(scope) {
+  if (window.enhanceCodelabCode) {
+    window.enhanceCodelabCode(scope);
+    return;
+  }
+
+  if (!syntaxHighlighterLoading) {
+    syntaxHighlighterLoading = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'syntax.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.append(script);
+    });
+  }
+
+  syntaxHighlighterLoading
+    .then(() => window.enhanceCodelabCode(scope))
+    .catch(() => addCodeControls(scope));
+}
+
 if (!currentSession || !pageContent) {
   pageContent.innerHTML = '<p>No se encontró la sesión solicitada. <a href="codelabs.html">Volver al índice de codelabs</a>.</p>';
 } else {
@@ -103,11 +126,11 @@ if (!currentSession || !pageContent) {
   pageContent.className = 'codelab-layout session-codelab-layout';
   pageContent.parentElement.classList.add('session-codelab-main');
 
-  if (number === 1) {
+  if (number >= 1 && number <= 4) {
     pageContent.innerHTML = `
       ${sidebarMarkup()}
       <div class="codelab-content" id="detailed-codelab">
-        <p class="session-objective">Cargando el codelab detallado de la sesión 1…</p>
+        <p class="session-objective">Cargando el codelab detallado de la sesión ${number}…</p>
       </div>`;
 
     fetch('codelabs.html')
@@ -117,17 +140,17 @@ if (!currentSession || !pageContent) {
       })
       .then((markup) => {
         const documentSource = new DOMParser().parseFromString(markup, 'text/html');
-        const detailedCodelab = documentSource.querySelector('#codelab-1');
-        if (!detailedCodelab) throw new Error('No se encontró el contenido de la sesión 1.');
+        const detailedCodelab = documentSource.querySelector(`#codelab-${number}`);
+        if (!detailedCodelab) throw new Error(`No se encontró el contenido de la sesión ${number}.`);
 
         detailedCodelab.removeAttribute('hidden');
         const destination = pageContent.querySelector('#detailed-codelab');
         destination.replaceChildren(detailedCodelab);
-        addCodeControls(destination);
+        enhanceCodeBlocks(destination);
       })
       .catch(() => {
         pageContent.querySelector('#detailed-codelab').innerHTML =
-          '<p class="session-objective">No se pudo cargar el codelab detallado. Abre <a href="codelabs.html#codelab-1">la sesión 1</a> desde el índice.</p>';
+          `<p class="session-objective">No se pudo cargar el codelab detallado. Abre <a href="codelabs.html#codelab-${number}">la sesión ${number}</a> desde el índice.</p>`;
       });
   } else {
   pageContent.innerHTML = `
@@ -147,6 +170,6 @@ if (!currentSession || !pageContent) {
         <div class="common-errors"><h3>Si algo no funciona</h3><dl><dt>La app no refleja el cambio</dt><dd>Guarda los archivos y, si cambiaste la estructura de widgets o inicialización, prueba Hot Restart.</dd><dt>Hay un error de tipos o nulos</dt><dd>Lee la línea señalada por el analizador y confirma el tipo esperado antes de forzar una conversión.</dd><dt>El resultado no coincide</dt><dd>Vuelve al paso 4, revisa los datos de entrada y después el estado que utiliza la interfaz.</dd></dl></div>
       </section>
     </div>`;
-  addCodeControls(pageContent);
+  enhanceCodeBlocks(pageContent);
   }
 }

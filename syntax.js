@@ -1,9 +1,4 @@
 (() => {
-  const escapeHtml = (value) => value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
-
   const dartKeywords = new Set([
     'abstract', 'as', 'assert', 'async', 'await', 'break', 'case', 'catch',
     'class', 'const', 'continue', 'covariant', 'default', 'deferred', 'do',
@@ -15,36 +10,54 @@
     'var', 'void', 'when', 'while', 'with', 'yield'
   ]);
   const dartTypes = new Set([
-    'BuildContext', 'ColorScheme', 'Column', 'Icon', 'MaterialApp',
-    'Padding', 'Row', 'Scaffold', 'SizedBox', 'State', 'StatefulWidget',
+    'AppBar', 'BuildContext', 'Card', 'Center', 'Color', 'ColorScheme',
+    'Column', 'CrossAxisAlignment', 'EdgeInsets', 'ElevatedButton', 'Future',
+    'Icon', 'IconData', 'Key', 'List', 'Map', 'MaterialApp', 'Padding',
+    'Row', 'Scaffold', 'SizedBox', 'State', 'StatefulWidget',
     'StatelessWidget', 'String', 'Text', 'ThemeData', 'Widget', 'Wrap',
-    'Card', 'ElevatedButton', 'OutlinedButton', 'Future', 'List', 'Map',
-    'int', 'double', 'bool', 'num'
+    'OutlinedButton', 'VoidCallback', 'bool', 'double', 'int', 'num'
   ]);
+  const dartPattern = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|@[A-Za-z_]\w*|\b\d+(?:\.\d+)?\b|\b[A-Za-z_]\w*\b)/g;
+
+  function escapeHtml(value) {
+    return value
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;');
+  }
 
   function span(className, content) {
     return `<span class="token-${className}">${content}</span>`;
   }
 
   function highlightDart(source) {
-    const escaped = escapeHtml(source);
-    const tokenPattern = /(\/\/[^\n]*|\/\*[\s\S]*?\*\/|'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|@[A-Za-z_][\w]*|\b[A-Za-z_][\w]*\b|\b\d+(?:\.\d+)?\b)/g;
-    return escaped.replace(tokenPattern, (token) => {
+    // Escape once, then classify whole comments and strings before their contents.
+    return escapeHtml(source).replace(dartPattern, (token) => {
       if (token.startsWith('//') || token.startsWith('/*')) return span('comment', token);
       if (token.startsWith("'") || token.startsWith('"')) return span('string', token);
       if (token.startsWith('@')) return span('annotation', token);
       if (/^\d/.test(token)) return span('number', token);
+      if (token === 'true' || token === 'false' || token === 'null') return span('literal', token);
       if (dartKeywords.has(token)) return span('keyword', token);
       if (dartTypes.has(token) || /^[A-Z]/.test(token)) return span('type', token);
-      if (token === 'true' || token === 'false' || token === 'null') return span('literal', token);
       return token;
     });
   }
 
   function highlightShell(source) {
-    const escaped = escapeHtml(source);
-    return escaped.replace(/("[^"]*")/g, (string) => span('string', string))
+    return escapeHtml(source)
+      .replace(/("[^"]*")/g, (string) => span('string', string))
       .replace(/^(flutter|dart|git|cd|code)(?=\s|$)/gm, (command) => span('command', command));
+  }
+
+  function detectLanguage(pre, source) {
+    if (pre.dataset.language === 'dart' || pre.dataset.language === 'shell') {
+      return pre.dataset.language;
+    }
+
+    return /(?:import 'package:flutter|class \w+ extends|StatefulWidget|StatelessWidget|setState\s*\()/m.test(source)
+      ? 'dart'
+      : 'shell';
   }
 
   async function copyCode(source) {
@@ -64,12 +77,8 @@
     helper.remove();
   }
 
-  document.querySelectorAll('pre code').forEach((block) => {
-    const source = block.textContent;
-    const isDart = /(?:import 'package:flutter|class \w+ extends|StatefulWidget|StatelessWidget|setState\s*\()/m.test(source);
-    const language = isDart ? 'dart' : 'shell';
-    block.parentElement.dataset.language = language;
-    block.innerHTML = isDart ? highlightDart(source) : highlightShell(source);
+  function addCopyButton(pre, source, language) {
+    if (pre.querySelector('.code-copy')) return;
 
     const copyButton = document.createElement('button');
     copyButton.type = 'button';
@@ -91,6 +100,24 @@
         copyButton.classList.remove('copied', 'copy-error');
       }, 1800);
     });
-    block.parentElement.append(copyButton);
-  });
+    pre.append(copyButton);
+  }
+
+  function enhanceCodeBlocks(scope = document) {
+    scope.querySelectorAll('pre code').forEach((block) => {
+      const pre = block.parentElement;
+      if (pre.dataset.syntaxHighlighted === 'true') return;
+
+      // Keep a text-only snapshot so formatting never affects what is copied.
+      const source = block.textContent;
+      const language = detectLanguage(pre, source);
+      pre.dataset.language = language;
+      pre.dataset.syntaxHighlighted = 'true';
+      block.innerHTML = language === 'dart' ? highlightDart(source) : highlightShell(source);
+      addCopyButton(pre, source, language);
+    });
+  }
+
+  window.enhanceCodelabCode = enhanceCodeBlocks;
+  enhanceCodeBlocks();
 })();
