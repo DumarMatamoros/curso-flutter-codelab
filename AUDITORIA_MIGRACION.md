@@ -23,3 +23,7 @@ Los 39 archivos originales de contenido, código y estilos se conservan exactame
 `npm test` comprueba además las 32 páginas, el botón de tema, su persistencia, el seguimiento de la preferencia del sistema, el funcionamiento sin almacenamiento, la sincronización entre pestañas, los enlaces y anclas locales, las ocho pestañas semanales y la carga íntegra de las dieciséis sesiones. Verifica que el resaltado y el botón de copiar conservan el texto de los ejemplos.
 
 La verificación funcional usa un DOM con jsdom. No se realizó una inspección visual en navegador: la conexión de control del navegador no estaba disponible en esta sesión.
+
+## Mejoras visuales posteriores
+
+A petición del usuario, se añadieron transiciones de color de 280 ms, una mezcla de los degradados de portada de 320 ms y un cambio animado del icono de tema. Se habilitan después del primer dibujo para conservar la carga inicial sin destellos. Los enlaces de navegación incorporan un subrayado al interactuar; los bloques de código y los controles tienen un foco de teclado más claro. Las tarjetas solo reciben un cambio sutil de borde al pasar el cursor. La preferencia `prefers-reduced-motion` desactiva las transiciones, las animaciones y el desplazamiento suave, incluidas las reglas originales. Estos ajustes se concentran en `theme.css` y `theme.js`; se mantienen los 39 archivos originales verificados.

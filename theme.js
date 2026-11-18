@@ -88,6 +88,12 @@
 
     const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
     updateToggleUI(activeTheme);
+
+    // Espera un dibujo completo antes de habilitar transiciones de color.
+    // El tema inicial se aplicó en <head>, sin animar la carga de la página.
+    window.requestAnimationFrame?.(() => {
+      window.requestAnimationFrame(() => document.documentElement.classList.add('theme-ready'));
+    });
   }
 
   if (document.readyState === 'loading') {

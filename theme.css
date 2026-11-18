@@ -17,7 +17,8 @@
 /* El control queda fuera de .nav-links: también es accesible en móviles. */
 .nav { gap: 16px; }
 .theme-toggle {
-  display: inline-flex;
+  display: inline-grid;
+  grid-template-columns: 16px auto;
   align-items: center;
   justify-content: center;
   gap: 7px;
@@ -32,9 +33,13 @@
 }
 .theme-toggle:hover { background: #eeecff; }
 .theme-toggle:focus-visible { outline: 3px solid #6257e9; outline-offset: 4px; }
-.theme-icon { display: inline-flex; }
-:root[data-theme="dark"] .icon-moon,
-:root:not([data-theme="dark"]) .icon-sun { display: none; }
+.theme-icon { display: inline-flex; grid-area: 1 / 1; pointer-events: none; }
+.theme-icon svg { display: block; }
+.theme-toggle-label { grid-area: 1 / 2; min-inline-size: 6ch; text-align: left; }
+.icon-sun { opacity: 0; transform: rotate(-60deg) scale(.65); }
+.icon-moon { opacity: 1; transform: rotate(0) scale(1); }
+:root[data-theme="dark"] .icon-sun { opacity: 1; transform: rotate(0) scale(1); }
+:root[data-theme="dark"] .icon-moon { opacity: 0; transform: rotate(60deg) scale(.65); }
 .theme-toolbar { display: flex; justify-content: flex-end; padding-block: 16px; }
 :root[data-theme="dark"] .theme-toggle { background: #172035; color: #d5d0ff; border-color: #a69dff; }
 :root[data-theme="dark"] .theme-toggle:hover { background: #24244f; }
@@ -42,8 +47,19 @@
 
 /* Superficies y texto del modo oscuro; se conserva la geometría original. */
 :root[data-theme="dark"] :is(.codelab-page, .session-page) { background: var(--paper); }
-:root[data-theme="dark"] .hero { background: linear-gradient(115deg, #111428, #1a1e3f 48%, #0f2726); }
-:root[data-theme="dark"] .project-hero { background: linear-gradient(120deg, #161836, #0d2524); }
+/* La capa oscura permite interpolar los degradados sin cambiar el contenido. */
+.hero, .project-hero { position: relative; isolation: isolate; }
+.hero::before, .project-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0;
+}
+.hero::before { background: linear-gradient(115deg, #111428, #1a1e3f 48%, #0f2726); }
+.project-hero::before { background: linear-gradient(120deg, #161836, #0d2524); }
+:root[data-theme="dark"] :is(.hero, .project-hero)::before { opacity: 1; }
 :root[data-theme="dark"] :is(.hero-copy, .project-hero-content > p:not(.eyebrow)) { color: #c0cde3; }
 :root[data-theme="dark"] .button-ghost { background: #172035; border-color: #7069ae; color: #d5d0ff; }
 :root[data-theme="dark"] :is(.stats-grid, .emphasis-panel, .feature-card, .architecture, .method-grid article, .rubric, .tool-table, .increment-grid article, .spec-context-grid article, .spec-cards article, .spec-tools span) { background: #131929; }
@@ -85,4 +101,69 @@
 @media (min-width: 801px) and (max-width: 1100px) {
   .nav { height: auto; min-height: 84px; flex-wrap: wrap; padding-block: 16px; }
   .nav .nav-links { order: 3; flex-basis: 100%; flex-wrap: wrap; }
+}
+
+/* Ajustes discretos de lectura e interacción, compartidos por ambos temas. */
+::selection { background: #dcd6ff; color: #241b58; }
+:root[data-theme="dark"] ::selection { background: #514591; color: #fff; }
+:where(a, button, summary, input, select, textarea):focus-visible,
+.code-copy:focus-visible {
+  outline: 3px solid var(--purple);
+  outline-offset: 4px;
+}
+.nav-links a { position: relative; }
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -5px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.nav-links a:is(:hover, :focus-visible)::after { transform: scaleX(1); }
+.lab-step pre:focus-within { outline: 2px solid var(--purple); outline-offset: 3px; }
+.theme-toggle:active { transform: scale(.97); }
+
+/* Se activa tras el primer dibujo: el tema guardado aparece sin destellos. */
+@media (prefers-reduced-motion: no-preference) {
+  :root.theme-ready :where(
+    body, .section-tint, .codelab-section, .codelab-sidebar, .sidebar-home,
+    .sidebar-week a, .sidebar-week a span, .navigator-label, .sidebar-week h2,
+    .hero-copy, .project-hero-content > p, .stats-grid, .emphasis-panel,
+    .feature-card, .architecture, .concept-card, .arch-tag, .architecture-note,
+    .method-grid article, .method-grid span, .rubric, .callout, .tool-table,
+    .tool-head, .tool-note, .check-steps li, .warning, .learning-box, .step-number,
+    .explain, .lab-step details, .lab-step summary, .code-reading > div,
+    .common-errors, .common-errors dd, .project-cycle li, .increment-grid article,
+    .increment-grid .evidence, .week-label, .project-git-rule, .project-git-rule p,
+    .session-facts, .session-objective, .spec-context, .spec-number, .spec-example,
+    .spec-example p, .spec-note, .spec-cards article, .spec-tools span, code
+  ) {
+    transition: background-color 280ms ease, color 280ms ease, border-color 280ms ease;
+  }
+  :root.theme-ready :is(.hero, .project-hero)::before { transition: opacity 320ms ease; }
+  :root.theme-ready .theme-toggle {
+    transition: background-color 280ms ease, color 280ms ease, border-color 280ms ease, transform 160ms ease;
+  }
+  :root.theme-ready .theme-icon { transition: opacity 240ms ease, transform 320ms cubic-bezier(.2, .8, .2, 1); }
+  .nav-links a::after { transition: transform 180ms ease; }
+  .sidebar-week a { transition: background-color 180ms ease, color 180ms ease; }
+  .code-copy { transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease; }
+}
+@media (hover: hover) and (pointer: fine) {
+  .code-copy:hover { box-shadow: 0 0 0 2px rgba(166, 157, 255, .22); }
+  .feature-card:hover, .increment-grid article:hover { border-color: #a69dff; }
+}
+/* Incluye las animaciones heredadas de las hojas originales. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .button:hover, .theme-toggle:active { transform: none; }
 }
