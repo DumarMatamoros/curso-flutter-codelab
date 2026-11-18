@@ -1,15 +1,20 @@
 // theme.js - Gestor de tema Claro / Oscuro para el Codelab Flutter
 (function () {
   const STORAGE_KEY = 'curso_flutter_theme';
+  const systemPreference = window.matchMedia?.('(prefers-color-scheme: dark)');
+  let explicitPreference = null;
 
   function getSystemPreference() {
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return systemPreference?.matches ? 'dark' : 'light';
   }
 
   function getInitialTheme() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'dark' || saved === 'light') return saved;
+      if (saved === 'dark' || saved === 'light') {
+        explicitPreference = saved;
+        return saved;
+      }
     } catch (e) {
       /* ignore localStorage errors */
     }
@@ -38,11 +43,15 @@
   }
 
   // 3. Cambiar tema y persistir
-  function setTheme(theme) {
+  function setTheme(theme, persist = true) {
+    if (theme !== 'dark' && theme !== 'light') return;
     document.documentElement.setAttribute('data-theme', theme);
-    try {
-      localStorage.setItem(STORAGE_KEY, theme);
-    } catch (e) {}
+    if (persist) {
+      explicitPreference = theme;
+      try {
+        localStorage.setItem(STORAGE_KEY, theme);
+      } catch (e) {}
+    }
     updateToggleUI(theme);
     window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
   }
@@ -57,10 +66,12 @@
   function injectToggleButton() {
     if (document.getElementById('theme-toggle-btn')) return;
 
-    const nav = document.querySelector('.nav');
-    if (!nav) return;
-
-    const navLinks = nav.querySelector('.nav-links');
+    let nav = document.querySelector('.nav');
+    if (!nav) {
+      nav = document.createElement('div');
+      nav.className = 'container theme-toolbar';
+      document.body.prepend(nav);
+    }
 
     const button = document.createElement('button');
     button.id = 'theme-toggle-btn';
@@ -73,11 +84,7 @@
       toggleTheme();
     });
 
-    if (navLinks) {
-      navLinks.appendChild(button);
-    } else {
-      nav.appendChild(button);
-    }
+    nav.appendChild(button);
 
     const activeTheme = document.documentElement.getAttribute('data-theme') || 'light';
     updateToggleUI(activeTheme);
@@ -89,16 +96,18 @@
     injectToggleButton();
   }
 
-  // 5. Escucha de cambios de preferencia en el sistema
-  if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
-      try {
-        if (!localStorage.getItem(STORAGE_KEY)) {
-          setTheme(e.matches ? 'dark' : 'light');
-        }
-      } catch (err) {}
-    });
-  }
+  // Sigue al sistema hasta que la persona elige un tema explícitamente.
+  systemPreference?.addEventListener('change', function (event) {
+    if (!explicitPreference) setTheme(event.matches ? 'dark' : 'light', false);
+  });
+
+  // Mantiene sincronizadas las pestañas cuando cambia la preferencia guardada.
+  window.addEventListener('storage', function (event) {
+    if (event.key !== STORAGE_KEY) return;
+    explicitPreference = event.newValue === 'dark' || event.newValue === 'light'
+      ? event.newValue : null;
+    setTheme(explicitPreference || getSystemPreference(), false);
+  });
 
   // Exponer a nivel de ventana
   window.CursoFlutterTheme = {

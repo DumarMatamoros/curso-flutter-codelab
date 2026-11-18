@@ -1,0 +1,88 @@
+/* El diseño claro permanece en las hojas originales, sin modificaciones. */
+:root { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #eef2fb;
+  --muted: #a5b4cc;
+  --paper: #0b0f19;
+  --cloud: #0f1422;
+  --line: #303b55;
+  --purple: #a69dff;
+  --mint: #b7f4d7;
+  --dark: #070a13;
+  --dark-panel: #131929;
+  --shadow: 0 20px 60px rgba(0, 0, 0, .45);
+}
+
+/* El control queda fuera de .nav-links: también es accesible en móviles. */
+.nav { gap: 16px; }
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border: 1px solid #6257e9;
+  border-radius: 999px;
+  background: #fff;
+  color: #443ca4;
+  font: 700 .8rem Manrope, Arial, sans-serif;
+  cursor: pointer;
+}
+.theme-toggle:hover { background: #eeecff; }
+.theme-toggle:focus-visible { outline: 3px solid #6257e9; outline-offset: 4px; }
+.theme-icon { display: inline-flex; }
+:root[data-theme="dark"] .icon-moon,
+:root:not([data-theme="dark"]) .icon-sun { display: none; }
+.theme-toolbar { display: flex; justify-content: flex-end; padding-block: 16px; }
+:root[data-theme="dark"] .theme-toggle { background: #172035; color: #d5d0ff; border-color: #a69dff; }
+:root[data-theme="dark"] .theme-toggle:hover { background: #24244f; }
+:root[data-theme="dark"] .theme-toggle:focus-visible { outline-color: #a69dff; }
+
+/* Superficies y texto del modo oscuro; se conserva la geometría original. */
+:root[data-theme="dark"] :is(.codelab-page, .session-page) { background: var(--paper); }
+:root[data-theme="dark"] .hero { background: linear-gradient(115deg, #111428, #1a1e3f 48%, #0f2726); }
+:root[data-theme="dark"] .project-hero { background: linear-gradient(120deg, #161836, #0d2524); }
+:root[data-theme="dark"] :is(.hero-copy, .project-hero-content > p:not(.eyebrow)) { color: #c0cde3; }
+:root[data-theme="dark"] .button-ghost { background: #172035; border-color: #7069ae; color: #d5d0ff; }
+:root[data-theme="dark"] :is(.stats-grid, .emphasis-panel, .feature-card, .architecture, .method-grid article, .rubric, .tool-table, .increment-grid article, .spec-context-grid article, .spec-cards article, .spec-tools span) { background: #131929; }
+:root[data-theme="dark"] :is(.concept-card, .callout, .tool-note, .learning-box, .project-git-rule, .session-objective) { background: #1d2142; color: #d5d0ff; }
+:root[data-theme="dark"] :is(.arch-tag, .method-grid span, .tool-head, .week-label) { background: #24244f; color: #c4bdff; }
+:root[data-theme="dark"] :is(.architecture-note, .warning, .common-errors, .spec-note) { background: #2c2118; color: #f2d2ab !important; }
+:root[data-theme="dark"] .common-errors { border-color: #725338; }
+:root[data-theme="dark"] .common-errors dd { color: #f2d2ab; }
+:root[data-theme="dark"] :is(.check-steps li, .code-reading > div, .project-cycle li, .session-facts) { background: #172035; }
+:root[data-theme="dark"] .codelab-section.alternate { background: #0f1422; }
+:root[data-theme="dark"] .step-number { background: #6257e9; }
+:root[data-theme="dark"] .explain { background: #102c42; color: #d4eaff; }
+:root[data-theme="dark"] .lab-step details { background: #1d2142; }
+:root[data-theme="dark"] .lab-step summary { color: #c4bdff; }
+:root[data-theme="dark"] .increment-grid .evidence { color: #c0cde3; }
+:root[data-theme="dark"] .project-git-rule { border-color: #7069ae; }
+:root[data-theme="dark"] .project-git-rule p:not(.eyebrow) { color: #c0cde3; }
+:root[data-theme="dark"] .spec-section > div > p { color: #c0cde3; }
+:root[data-theme="dark"] code { background: #242b45; color: #c4bdff; }
+/* Los bloques ya oscuros conservan sus colores originales. */
+:root[data-theme="dark"] :is(pre code, .challenge code, .finish-line code, .moment code, .git-session code, .session-practice code) { color: inherit; }
+:root[data-theme="dark"] pre code { background: none; }
+:root[data-theme="dark"] .codelab-sidebar { background: #131929; border-color: #4a466e; }
+:root[data-theme="dark"] .sidebar-home { border-color: #4a466e; }
+:root[data-theme="dark"] :is(.navigator-label, .sidebar-week h2) { color: #c4bdff; }
+:root[data-theme="dark"] .sidebar-week a { color: #c0cde3; }
+:root[data-theme="dark"] .sidebar-week a span { background: #24244f; color: #c4bdff; }
+:root[data-theme="dark"] .sidebar-week a:is(:hover, :focus-visible) { background: #24244f; color: #eef2fb; }
+:root[data-theme="dark"] .sidebar-week a.current-session { background: #4b4198; color: #fff; }
+:root[data-theme="dark"] .sidebar-week a.current-session span { background: var(--mint); color: #302874; }
+@media (max-width: 800px) {
+  .nav .brand { margin-right: auto; }
+}
+:root[data-theme="dark"] .spec-context { background: #1d2142; }
+:root[data-theme="dark"] .spec-number { background: #24244f; }
+:root[data-theme="dark"] .spec-example { background: #172035; }
+:root[data-theme="dark"] .spec-example p { color: #c0cde3 !important; }
+/* Da espacio al control sin perder enlaces en ventanas intermedias. */
+@media (min-width: 801px) and (max-width: 1100px) {
+  .nav { height: auto; min-height: 84px; flex-wrap: wrap; padding-block: 16px; }
+  .nav .nav-links { order: 3; flex-basis: 100%; flex-wrap: wrap; }
+}

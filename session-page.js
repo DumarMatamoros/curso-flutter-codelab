@@ -10,7 +10,6 @@ const codeExamples = {
   4: { language: 'dart', code: 'final changed = await Navigator.push<bool>(\n  context,\n  MaterialPageRoute(\n    builder: (_) => TaskDetailScreen(task: task),\n  ),\n);\n\nif (changed == true) setState(() {});' },
   5: { language: 'dart', code: 'class Task {\n  const Task({required this.id, required this.title});\n  final int id;\n  final String title;\n\n  factory Task.fromJson(Map<String, dynamic> json) {\n    return Task(id: json[\'id\'] as int, title: json[\'title\'] as String);\n  }\n}' },
   6: { language: 'shell', code: 'lib/features/tasks/\n  data/task_repository.dart\n  domain/task.dart\n  presentation/task_list_view.dart\n  presentation/task_list_view_model.dart' },
-  7: { language: 'dart', code: 'final response = await http.get(Uri.parse(apiUrl));\nif (response.statusCode != 200) {\n  throw Exception(\'No se pudieron cargar las tareas\');\n}\nfinal data = jsonDecode(response.body) as List<dynamic>;\nreturn data.map((item) => Task.fromJson(item)).toList();' },
   8: { language: 'dart', code: 'Future<void> loadTasks() async {\n  isLoading = true;\n  notifyListeners();\n  try {\n    tasks = await repository.getTasks();\n  } finally {\n    isLoading = false;\n    notifyListeners();\n  }\n}' },
   9: { language: 'dart', code: 'if (formKey.currentState!.validate()) {\n  await viewModel.createTask(\n    titleController.text.trim(),\n  );\n}' },
   10: { language: 'dart', code: 'try {\n  await repository.getTasks();\n} on SocketException {\n  errorMessage = \'Revisa tu conexión e inténtalo nuevamente.\';\n} on TimeoutException {\n  errorMessage = \'El servidor demoró demasiado.\';\n}' },
@@ -18,6 +17,8 @@ const codeExamples = {
   12: { language: 'dart', code: 'final preferences = await SharedPreferences.getInstance();\nawait preferences.setBool(\'darkMode\', true);\nfinal isDarkMode = preferences.getBool(\'darkMode\') ?? false;' },
   13: { language: 'dart', code: 'final visibleTasks = tasks.where((task) {\n  return task.title.toLowerCase().contains(query.toLowerCase());\n}).toList();' },
   14: { language: 'shell', code: 'dart format lib test\nflutter analyze\nflutter test\nflutter build apk --release' },
+  15: { language: 'shell', code: '# README: requisitos, instalación, arquitectura, API y pruebas\ndart format lib test\nflutter analyze\nflutter test' },
+  16: { language: 'shell', code: 'dart format lib test\nflutter analyze\nflutter test\nflutter build apk --release\n\n# Salida esperada\n# build/app/outputs/flutter-apk/app-release.apk' },
 };
 
 function list(items) {
@@ -126,14 +127,15 @@ if (!currentSession || !pageContent) {
   pageContent.className = 'codelab-layout session-codelab-layout';
   pageContent.parentElement.classList.add('session-codelab-main');
 
-  if (number >= 1 && number <= 4) {
+  if (number >= 1 && number <= 16) {
     pageContent.innerHTML = `
       ${sidebarMarkup()}
       <div class="codelab-content" id="detailed-codelab">
         <p class="session-objective">Cargando el codelab detallado de la sesión ${number}…</p>
       </div>`;
 
-    fetch('codelabs.html')
+    const detailedPage = number >= 5 ? `codelab-${String(number).padStart(2, '0')}.html` : 'codelabs.html';
+    fetch(detailedPage)
       .then((response) => {
         if (!response.ok) throw new Error('No se pudo leer el codelab original.');
         return response.text();
@@ -149,8 +151,9 @@ if (!currentSession || !pageContent) {
         enhanceCodeBlocks(destination);
       })
       .catch(() => {
+        const fallback = number >= 5 ? detailedPage : `codelabs.html#codelab-${number}`;
         pageContent.querySelector('#detailed-codelab').innerHTML =
-          `<p class="session-objective">No se pudo cargar el codelab detallado. Abre <a href="codelabs.html#codelab-${number}">la sesión ${number}</a> desde el índice.</p>`;
+          `<p class="session-objective">No se pudo cargar el codelab detallado. Abre <a href="${fallback}">la sesión ${number}</a> desde el índice.</p>`;
       });
   } else {
   pageContent.innerHTML = `
