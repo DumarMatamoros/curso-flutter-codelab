@@ -1,1 +1,90 @@
-/* Mejoras de experiencia: progreso, navegación, búsqueda, lectura e impresión. */
+/* Mejoras de experiencia: progreso, navegación, búsqueda, lectura e impresión.
+   Usa las variables de styles.css/theme.css para funcionar en ambos temas. */
+:root {
+  --enh-accent: #4f45d6;
+  --enh-accent-soft: #eeecff;
+  --enh-done: #0f7a4f;
+  --enh-done-soft: #e3f8ee;
+  --enh-surface: #fff;
+  --enh-overlay: rgba(18, 24, 42, .55);
+}
+:root[data-theme="dark"] {
+  --enh-accent: #b3abff;
+  --enh-accent-soft: #24244f;
+  --enh-done: #8ef0c1;
+  --enh-done-soft: #12352a;
+  --enh-surface: #131929;
+  --enh-overlay: rgba(2, 4, 10, .7);
+}
+
+/* ---------- Progreso por paso ---------- */
+.step-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 0 8px;
+  font: 700 .82rem Manrope, Arial, sans-serif;
+  color: var(--muted);
+}
+.step-progress progress {
+  flex: 1 1 auto;
+  max-width: 260px;
+  height: 8px;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line);
+  appearance: none;
+}
+.step-progress progress::-webkit-progress-bar { background: var(--line); border-radius: 999px; }
+.step-progress progress::-webkit-progress-value { background: var(--enh-accent); border-radius: 999px; }
+.step-progress progress::-moz-progress-bar { background: var(--enh-accent); border-radius: 999px; }
+.step-progress.is-complete { color: var(--enh-done); }
+.step-progress.is-complete progress::-webkit-progress-value { background: var(--enh-done); }
+.step-progress.is-complete progress::-moz-progress-bar { background: var(--enh-done); }
+.step-progress.is-complete .step-progress-text::after { content: " · ¡completado!"; }
+
+.step-done {
+  float: right;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 2px 0 8px 14px;
+  padding: 5px 11px 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--enh-surface);
+  color: var(--muted);
+  font: 700 .78rem Manrope, Arial, sans-serif;
+  cursor: pointer;
+  user-select: none;
+}
+.step-done input { width: 16px; height: 16px; margin: 0; accent-color: var(--enh-done); cursor: pointer; }
+.step-done:hover { border-color: var(--enh-accent); color: var(--ink); }
+.step-done:has(input:focus-visible) { outline: 3px solid var(--purple); outline-offset: 3px; }
+.lab-step.is-done .step-done { border-color: var(--enh-done); background: var(--enh-done-soft); color: var(--enh-done); }
+.lab-step.is-done .step-number { background: var(--enh-done); color: var(--enh-surface); font-size: 0; }
+.lab-step.is-done .step-number::before { content: "✓"; font-size: .95rem; }
+.lab-step { scroll-margin-top: 24px; }
+
+.sidebar-week a { position: relative; }
+.sidebar-week a.is-complete::after,
+.sidebar-week a.is-started::after {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .8rem;
+  font-weight: 800;
+}
+.sidebar-week a.is-complete::after { content: "✓"; color: var(--enh-done); }
+.sidebar-week a.is-started::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--enh-accent);
+}
+.sidebar-week a:is(.is-complete, .is-started) { padding-right: 28px; }
+.sidebar-week a.current-session.is-complete::after { color: var(--mint); }
