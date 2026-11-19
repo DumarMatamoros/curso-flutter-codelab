@@ -1,6 +1,6 @@
 # Curso Flutter — Codelab
 
-Versión del [codelab original de epanchanaf](https://epanchanaf.github.io/curso-flutter/) con el mismo contenido y diseño claro, más un modo oscuro con contraste AA y mejoras para seguir los laboratorios.
+Versión del [codelab original de epanchanaf](https://epanchanaf.github.io/curso-flutter/) con el mismo contenido y diseño claro, más un modo oscuro, contraste AA en ambos temas y mejoras para seguir los laboratorios.
 
 **Sitio publicado:** https://dumarmatamoros.github.io/curso-flutter-codelab/
 
@@ -15,7 +15,7 @@ El curso contiene **8 semanas, 16 sesiones y 40 horas**, con los laboratorios co
 - **Anterior / Siguiente sesión** al final de cada sesión.
 - **Búsqueda rápida** de sesiones por número, título u objetivo, sin importar acentos.
 - **Impresión/PDF limpia:** sin menús ni botones, en colores claros y con las explicaciones desplegadas.
-- **Modo oscuro con contraste AA:** todo el texto supera 4.5:1 y el texto de cuerpo 7:1.
+- **Contraste AA en modo claro y oscuro:** todo el texto supera 7:1.
 - **Sin desbordamiento horizontal en móviles.**
 
 | Atajo | Acción |

@@ -1,9 +1,9 @@
 /* Mejoras de experiencia: progreso, navegación, búsqueda, lectura e impresión.
    Usa las variables de styles.css/theme.css para funcionar en ambos temas. */
 :root {
-  --enh-accent: #4f45d6;
+  --enh-accent: #4339b8;
   --enh-accent-soft: #eeecff;
-  --enh-done: #0f7a4f;
+  --enh-done: #09563a;
   --enh-done-soft: #e3f8ee;
   --enh-surface: #fff;
   --enh-overlay: rgba(18, 24, 42, .55);

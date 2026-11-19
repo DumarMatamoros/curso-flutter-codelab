@@ -78,7 +78,7 @@ function auditContrast({ root = document.body } = {}) {
     if (!visible(el)) continue;
     const cs = getComputedStyle(el);
     const fgRaw = parse(cs.color);
-    if (!fgRaw) continue;
+    if (!fgRaw || fgRaw[3] === 0) continue; // texto transparente: oculto a propósito, sin requisito de contraste
     const size = parseFloat(cs.fontSize);
     const bold = Number(cs.fontWeight) >= 700;
     const required = size >= 24 || (bold && size >= 18.66) ? 3 : 4.5;

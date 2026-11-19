@@ -179,3 +179,24 @@
 :root[data-theme="dark"] .challenge { background: linear-gradient(120deg, #2a2363, #3a307f); }
 :root[data-theme="dark"] .token-comment { color: #9aa6c4; }
 :root[data-theme="dark"] :is(.codelab-content, .explain, .learning-box, .callout) a:not([class]) { color: #c4bfff; }
+
+/* Contraste AA en modo claro (auditado con scripts/contrast-audit.js). Conserva la paleta
+   original con tonos algo más profundos para el texto atenuado, el morado y las cabeceras. */
+:root:not([data-theme="dark"]) {
+  --muted: #3f4a60;
+  --purple: #4339b8;
+}
+:root:not([data-theme="dark"]) :is(.codelab-hero, .session-page-hero) { background: linear-gradient(118deg, #171a3c, #3d3184 56%, #264f53); }
+:root:not([data-theme="dark"]) .token-comment { color: #9aa6c4; }
+:root:not([data-theme="dark"]) .section-dark .eyebrow { color: #b3abff; }
+:root:not([data-theme="dark"]) .challenge { background: linear-gradient(120deg, #2a2363, #3a307f); }
+:root:not([data-theme="dark"]) .challenge code { background: #1d1850; color: #fff; }
+:root:not([data-theme="dark"]) .spec-hero { background: linear-gradient(122deg, #15233e, #2f3c7a); }
+:root:not([data-theme="dark"]) .sidebar-week a:not(.current-session) { color: #3f4a60; }
+:root:not([data-theme="dark"]) .sidebar-week a:not(.current-session) span { color: #362d8c; }
+:root:not([data-theme="dark"]) :is(.hero-copy, .project-hero-content > p:not(.eyebrow)) { color: #38425a; }
+:root:not([data-theme="dark"]) .session-badge { background: #3b32a8; }
+:root:not([data-theme="dark"]) :is(.spec-note, .common-errors dd, .warning, .architecture-note) { color: #523f2a !important; }
+:root:not([data-theme="dark"]) .project-git-rule p:not(.eyebrow) { color: #45435e; }
+:root:not([data-theme="dark"]) :is(.spec-number, .method-grid span) { color: #3b32a8; }
+:root:not([data-theme="dark"]) .spec-example p { color: #3c4860 !important; }

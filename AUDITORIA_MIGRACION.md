@@ -49,7 +49,23 @@ Medido en Chrome con `scripts/contrast-audit.js` sobre todos los nodos de texto 
 
 Causas principales: en oscuro `--purple` se aclaraba a `#a69dff`, pero seguía usándose como fondo de texto blanco en insignias, marca y botón principal. Los degradados de las cabeceras de codelab y sesión terminaban en un verde azulado claro (`#41777c`), y los comentarios de código quedaban en 4.46:1. Ahora los rellenos usan `--purple-fill` (`#3b32a8`), los degradados son más profundos y `--muted`/`--purple` son algo más claros.
 
-El modo claro no se modificó porque conserva el diseño original. La misma auditoría encuentra allí 181 textos por debajo de AA, todos heredados del original: las cabeceras sobre `#41777c`, el morado `#6257e9` sobre fondos lila claro y los comentarios de código.
+### Contraste del modo claro
+
+A petición del usuario también se corrigió el modo claro, con la misma auditoría (11 720 textos). El script ignora ahora el texto transparente, como el número oculto bajo el ✓ de un paso completado.
+
+| | Antes | Después |
+|---|---|---|
+| Textos por debajo de AA | 181 | 0 |
+| Textos de tamaño normal por debajo de 7:1 | 2 238 | 0 |
+| Peor caso | 2.97:1 (código en los recuadros de reto) | 7.04:1 |
+
+Se conservan la paleta y la estructura del original, con tonos más profundos. Todo está en `theme.css`, bajo `:root:not([data-theme="dark"])`:
+
+- `--muted` pasa de `#5e6b80` a `#3f4a60` y `--purple` de `#6257e9` a `#4339b8`.
+- Las cabeceras de codelab y sesión terminan en `#264f53` en lugar de `#41777c`.
+- Los recuadros de reto usan el degradado profundo del modo oscuro y el código dentro de ellos va sobre `#1d1850`.
+- La etiqueta morada sobre la sección oscura de la portada se aclara.
+- Se oscurecen algunos colores fijos del original: menú lateral, notas, ejemplos de especificación y números de la metodología.
 
 ### Verificación
 
