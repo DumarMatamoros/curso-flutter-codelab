@@ -39,13 +39,13 @@ Diseño y plan: `docs/superpowers/specs/2026-11-19-mejoras-diseno-calidad-de-vid
 
 ### Contraste del modo oscuro
 
-Medido en Chrome con `scripts/contrast-audit.js` sobre los 11 522 nodos de texto de las 32 páginas, con todos los codelabs y detalles desplegados, la paleta de búsqueda abierta y progreso guardado. Se tomó el peor color de cada degradado.
+Medido en Chrome con `scripts/contrast-audit.js` sobre todos los nodos de texto de las 32 páginas: 11 184 antes y 11 744 después, que incluyen los componentes nuevos. Se auditó con todos los codelabs y detalles desplegados, la paleta de búsqueda abierta y progreso guardado, tomando el peor color de cada degradado.
 
 | | Antes | Después |
 |---|---|---|
 | Textos por debajo de AA (4.5:1, o 3:1 en texto grande) | 130 | 0 |
-| Textos de tamaño normal por debajo de 7:1 | 523 | 0 en las cabeceras, que eran el caso restante |
-| Peor caso | 1.91:1 (insignia «3 HORAS», menta sobre lila) | ≥ 7.35:1 en las páginas auditadas tras el último ajuste |
+| Textos de tamaño normal por debajo de 7:1 | 523 | 0 |
+| Peor caso | 1.91:1 (insignia «3 HORAS», menta sobre lila) | 7.07:1 |
 
 Causas principales: en oscuro `--purple` se aclaraba a `#a69dff`, pero seguía usándose como fondo de texto blanco en insignias, marca y botón principal. Los degradados de las cabeceras de codelab y sesión terminaban en un verde azulado claro (`#41777c`), y los comentarios de código quedaban en 4.46:1. Ahora los rellenos usan `--purple-fill` (`#3b32a8`), los degradados son más profundos y `--muted`/`--purple` son algo más claros.
 
