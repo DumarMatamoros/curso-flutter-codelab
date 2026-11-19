@@ -264,3 +264,42 @@ test('las flechas no cambian de sesión con el foco en código, botones o enlace
   assert.deepEqual(navigated, ['sesion-06.html']);
   dom.window.close();
 });
+
+test('el paso actual se calcula desde la posición de scroll', async () => {
+  const { dom, api } = await load('index.html');
+  // tops de cada paso relativos al viewport; la línea de lectura está al 40 % de 1000 px
+  assert.equal(api.currentStepIndex([-900, -300, 200, 900], 1000), 2);
+  assert.equal(api.currentStepIndex([500, 900], 1000), 0);
+  assert.equal(api.currentStepIndex([-3000, -2000, -1000], 1000), 2);
+  assert.equal(api.currentStepIndex([], 1000), -1);
+  dom.window.close();
+});
+
+test('los controles flotantes aparecen al llegar a los pasos y se ocultan al bajar en móvil', async () => {
+  const { dom, api } = await load('index.html');
+  const show = api.floatingVisible;
+  assert.equal(show({ firstStepTop: 1200, viewport: 800, direction: 'none', narrow: false }), false);
+  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'down', narrow: false }), true);
+  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'down', narrow: true }), false);
+  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'up', narrow: true }), true);
+  assert.equal(show({ firstStepTop: null, viewport: 800, direction: 'none', narrow: true }), true);
+  dom.window.close();
+});
+
+test('en las sesiones el menú lateral se puede plegar y empieza plegado', async () => {
+  const { dom, doc } = await load(page(5));
+  const sidebar = doc.querySelector('.codelab-sidebar');
+  const toggle = sidebar.querySelector('button.sidebar-toggle');
+  assert.ok(toggle, 'falta el botón para plegar el menú');
+  assert.match(toggle.textContent, /Sesión 5 de 16/);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(toggle.getAttribute('aria-controls'), sidebar.querySelector('.codelab-sidebar-menu').id);
+  assert.equal(sidebar.classList.contains('is-open'), false);
+  toggle.click();
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  assert.ok(sidebar.classList.contains('is-open'));
+  dom.window.close();
+  const index = await load('codelabs.html');
+  assert.equal(index.doc.querySelector('button.sidebar-toggle'), null);
+  index.dom.window.close();
+});

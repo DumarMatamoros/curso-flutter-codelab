@@ -452,3 +452,46 @@ pre { max-width: 100%; overflow-x: auto; }
   text-box: trim-both cap alphabetic;
   font-variant-numeric: lining-nums tabular-nums;
 }
+
+/* ---------- Marcas del menú legibles en cualquier estado y tema ----------
+   El punto y el ✓ usan el color del texto del enlace, que ya contrasta con su fondo en
+   todos los estados (normal, cursor, foco y sesión actual), en claro y en oscuro. */
+.sidebar-week a.is-started::after { background: currentColor; }
+.sidebar-week a.current-session.is-complete::after { color: currentColor; }
+
+/* ---------- Menú lateral plegable (sólo páginas de sesión en móvil) ---------- */
+.sidebar-toggle { display: none; }
+@media (max-width: 800px) {
+  .codelab-sidebar.is-collapsible .sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 44px;
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--enh-surface);
+    color: var(--ink);
+    font: 600 .9rem Manrope, Arial, sans-serif;
+    text-align: left;
+    cursor: pointer;
+  }
+  .codelab-sidebar.is-collapsible .sidebar-toggle strong { color: var(--enh-accent); }
+  .codelab-sidebar.is-collapsible:not(.is-open) :is(.codelab-sidebar-menu, .navigator-label) { display: none; }
+  .codelab-sidebar.is-collapsible.is-open .sidebar-toggle { margin-bottom: 12px; }
+}
+
+/* ---------- Controles flotantes: fuera de la vista hasta los pasos y al bajar en móvil ---------- */
+.floating-stack.is-hidden { opacity: 0; visibility: hidden; transform: translateY(12px); }
+@media (prefers-reduced-motion: no-preference) {
+  .floating-stack { transition: opacity 180ms ease, transform 180ms ease, visibility 180ms; }
+}
+
+/* ---------- Objetivos táctiles ---------- */
+@media (pointer: coarse) {
+  .step-done { min-height: 44px; padding-inline: 12px 14px; }
+  .step-done input { width: 20px; height: 20px; }
+}

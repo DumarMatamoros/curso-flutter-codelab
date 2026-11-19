@@ -16,7 +16,7 @@ El curso contiene **8 semanas, 16 sesiones y 40 horas**, con los laboratorios co
 - **Búsqueda rápida** de sesiones por número, título u objetivo, sin importar acentos.
 - **Impresión/PDF limpia:** sin menús ni botones, en colores claros y con las explicaciones desplegadas.
 - **Contraste AA en modo claro y oscuro:** todo el texto supera 7:1.
-- **Sin desbordamiento horizontal en móviles.**
+- **Móvil:** sin desbordamiento horizontal; en las sesiones el menú de 16 sesiones se pliega («Sesión 5 de 16 · Ver todas»); la píldora y el botón de volver arriba aparecen al llegar a los pasos y se ocultan al bajar; casillas táctiles de 44 px.
 
 | Atajo | Acción |
 |---|---|

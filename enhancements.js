@@ -155,20 +155,38 @@
     window.dispatchEvent(new CustomEvent('codelabenhanced', { detail: { session, section } }));
   }
 
-  // Recuerda el paso más visible mientras se lee (sólo con IntersectionObserver).
+  // Paso actual: el último cuyo inicio ya pasó la línea de lectura (40 % del alto de la ventana).
+  // Se calcula desde el scroll, así no se desfasa con saltos (enlaces, volver arriba, gestos rápidos).
+  function currentStepIndex(tops, viewport) {
+    if (!tops.length) return -1;
+    const line = viewport * 0.4;
+    let index = 0;
+    tops.forEach((top, i) => { if (top <= line) index = i; });
+    return index;
+  }
+
+  // Los controles flotantes aparecen al llegar a los pasos; en móvil se ocultan mientras se baja.
+  function floatingVisible({ firstStepTop, viewport, direction, narrow }) {
+    if (firstStepTop === null) return true;
+    if (firstStepTop > viewport * 0.6) return false;
+    return !(narrow && direction === 'down');
+  }
+
+  let tracked = null; // { section, session, current }
   function observeSteps(section, session) {
-    if (!isSingleCodelabPage() || !('IntersectionObserver' in window)) return;
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        const number = stepsOf(section).indexOf(entry.target) + 1;
-        if (number > 0) {
-          rememberPosition(session, number, stepLabel(entry.target, number - 1));
-          window.dispatchEvent(new CustomEvent('codelabstep', { detail: { session, step: number } }));
-        }
-      });
-    }, { rootMargin: '-35% 0px -55% 0px' });
-    stepsOf(section).forEach((step) => observer.observe(step));
+    if (!isSingleCodelabPage() || tracked) return;
+    tracked = { section, session, current: 0 };
+    trackScroll();
+  }
+
+  function trackScroll() {
+    if (!tracked) return;
+    const steps = stepsOf(tracked.section);
+    const index = currentStepIndex(steps.map((step) => step.getBoundingClientRect().top), window.innerHeight);
+    if (index < 0 || index + 1 === tracked.current) return;
+    tracked.current = index + 1;
+    rememberPosition(tracked.session, tracked.current, stepLabel(steps[index], index));
+    window.dispatchEvent(new CustomEvent('codelabstep', { detail: { session: tracked.session, step: tracked.current } }));
   }
 
   function refreshSidebar() {
@@ -204,6 +222,7 @@
     const sections = [];
     if (root.id && sessionOf(root)) sections.push(root);
     root.querySelectorAll('[id^="codelab-"]').forEach((el) => sections.push(el));
+    setupSidebarToggle();
     sections.forEach((section) => {
       enhanceCodelab(section);
       if (section.dataset.enhanced === 'true') rememberTotal(sessionOf(section), Number(section.dataset.totalSteps));
@@ -245,12 +264,30 @@
     floatingStack().append(top);
 
     let scheduled = false;
+    let lastY = window.scrollY;
+    let direction = 'none';
+    const narrow = () => window.matchMedia?.('(max-width: 800px)').matches;
     const update = () => {
       scheduled = false;
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const ratio = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
       bar.firstChild.style.transform = `scaleX(${ratio})`;
       top.classList.toggle('is-visible', window.scrollY > 600);
+      const delta = window.scrollY - lastY;
+      if (Math.abs(delta) > 8) {
+        direction = delta > 0 ? 'down' : 'up';
+        lastY = window.scrollY;
+      }
+      const firstStep = tracked && stepsOf(tracked.section)[0];
+      const pillOpen = document.querySelector('.step-pill-toggle[aria-expanded="true"]');
+      const visible = pillOpen || floatingVisible({
+        firstStepTop: firstStep ? firstStep.getBoundingClientRect().top : null,
+        viewport: window.innerHeight,
+        direction,
+        narrow: !!narrow()
+      });
+      floatingStack().classList.toggle('is-hidden', !visible);
+      trackScroll();
     };
     window.addEventListener('scroll', () => {
       if (scheduled) return;
@@ -601,6 +638,35 @@
     if (event.key === 'ArrowRight' && current < 16) api.navigate(sessionUrl(current + 1));
   });
 
+  // ---------- Menú lateral plegable en las páginas de sesión (móvil) ----------
+  function setupSidebarToggle() {
+    const current = currentSessionNumber();
+    const sidebar = document.querySelector('.codelab-sidebar');
+    if (!current || !sidebar || sidebar.querySelector('.sidebar-toggle')) return;
+    const menu = sidebar.querySelector('.codelab-sidebar-menu');
+    if (!menu) return;
+    if (!menu.id) menu.id = 'sidebar-sessions';
+    sidebar.classList.add('is-collapsible');
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'sidebar-toggle';
+    toggle.setAttribute('aria-controls', menu.id);
+    const render = () => {
+      const open = sidebar.classList.contains('is-open');
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.innerHTML = open
+        ? '<span>Ocultar sesiones</span><span aria-hidden="true">▴</span>'
+        : `<span>Sesión ${current} de ${sessions().length} · <strong>Ver todas</strong></span><span aria-hidden="true">▾</span>`;
+    };
+    toggle.addEventListener('click', () => {
+      sidebar.classList.toggle('is-open');
+      render();
+    });
+    render();
+    const home = sidebar.querySelector('.sidebar-home');
+    if (home) home.after(toggle); else sidebar.prepend(toggle);
+  }
+
   // ---------- Impresión: muestra las explicaciones plegadas y luego restaura el estado ----------
   let printState = null;
   window.addEventListener('beforeprint', () => {
@@ -637,6 +703,8 @@
     enhanceCodelab,
     normalize,
     searchSessions,
+    currentStepIndex,
+    floatingVisible,
     navigate,
     openPalette,
     closePalette
