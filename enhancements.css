@@ -444,3 +444,11 @@
 .lab-step > *, .codelab-layout > *, .codelab-content, .spec-section > * { min-width: 0; }
 pre { max-width: 100%; overflow-x: auto; }
 :where(p, li, dd, td, th, h2, h3) > code { overflow-wrap: anywhere; }
+
+/* Números centrados ópticamente en sus círculos, sin depender de las métricas de la fuente:
+   la caja del texto se recorta a la altura de las cifras (con line-height: 1 como respaldo). */
+.step-number, .sidebar-week a span, .search-num {
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+  font-variant-numeric: lining-nums tabular-nums;
+}
