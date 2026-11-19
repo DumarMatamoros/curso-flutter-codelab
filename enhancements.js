@@ -265,6 +265,14 @@
       memoryProgress = {};
       refreshAll();
     }
+    if (event.key === LAST_KEY || event.key === null) buildResumeBanner();
+  });
+  // Al volver con «Atrás» la página puede restaurarse desde memoria sin ejecutar los scripts.
+  window.addEventListener('pageshow', (event) => {
+    if (!event.persisted) return;
+    memoryProgress = {};
+    refreshAll();
+    buildResumeBanner();
   });
 
   // ---------- Lectura: barra de progreso, volver arriba y píldora de pasos ----------
@@ -323,7 +331,11 @@
     window.addEventListener('scroll', () => {
       if (scheduled) return;
       scheduled = true;
-      (window.requestAnimationFrame || window.setTimeout)(update);
+      // requestAnimationFrame con respaldo: si el navegador frena el dibujado, igual se actualiza.
+      let done = false;
+      const run = () => { if (!done) { done = true; update(); } };
+      window.requestAnimationFrame?.(run);
+      window.setTimeout(run, 150);
     }, { passive: true });
     update();
   }
@@ -468,9 +480,16 @@
     window.location.href = url;
   }
 
+  // Sólo los campos donde se escribe bloquean los atajos; casillas y botones no.
+  const TEXT_INPUTS = /^(?:text|search|email|url|tel|password|number|date|time|datetime-local|month|week)$/i;
   function isTyping(target) {
-    return !!target && (target.isContentEditable || /^(?:input|textarea|select)$/i.test(target.tagName || ''));
+    if (!target) return false;
+    if (target.isContentEditable || /^(?:textarea|select)$/i.test(target.tagName || '')) return true;
+    return /^input$/i.test(target.tagName || '') && TEXT_INPUTS.test(target.type || 'text');
   }
+
+  // Las casillas de progreso no usan las flechas: desde ellas se puede cambiar de sesión.
+  const isProgressBox = (target) => !!target?.closest?.('.step-done, .steps-all');
 
   function buildPager(section) {
     const current = currentSessionNumber();
@@ -508,21 +527,28 @@
     scrollToHashStep(event.detail.section);
   });
 
+  // Crea, actualiza o quita el aviso según la última posición guardada (idempotente).
   function buildResumeBanner() {
     const hero = document.querySelector('header.hero, header.codelab-hero');
     const last = readLast();
-    if (!hero || !last || document.querySelector('.resume-banner')) return;
+    let banner = document.querySelector('.resume-banner');
+    if (!hero || !last) {
+      banner?.remove();
+      return;
+    }
     const session = sessions().find((s) => s.number === last.session);
-    const banner = document.createElement('aside');
-    banner.className = 'resume-banner container';
-    banner.setAttribute('aria-label', 'Retomar el curso');
-    banner.innerHTML = '<p><span class="resume-eyebrow">CONTINUAR DONDE LO DEJASTE</span><strong></strong><span class="resume-title"></span></p><a class="resume-link"></a>';
+    if (!banner) {
+      banner = document.createElement('aside');
+      banner.className = 'resume-banner container';
+      banner.setAttribute('aria-label', 'Retomar el curso');
+      banner.innerHTML = '<p><span class="resume-eyebrow">CONTINUAR DONDE LO DEJASTE</span><strong></strong><span class="resume-title"></span></p><a class="resume-link"></a>';
+      hero.after(banner);
+    }
     banner.querySelector('strong').textContent = `Sesión ${last.session} · paso ${last.label ?? last.step}`;
     banner.querySelector('.resume-title').textContent = session ? session.title : '';
     const link = banner.querySelector('a');
     link.href = `${sessionUrl(last.session)}#paso-${last.step}`;
     link.textContent = 'Continuar →';
-    hero.after(banner);
   }
 
   // Paleta de búsqueda: diálogo modal accesible con lista de opciones.
@@ -684,7 +710,7 @@
     const current = currentSessionNumber();
     if (!current || event.shiftKey) return;
     // Sólo sin foco en ningún control: las flechas también desplazan bloques de código y listas.
-    if (event.target !== document.body && event.target !== document.documentElement) return;
+    if (event.target !== document.body && event.target !== document.documentElement && !isProgressBox(event.target)) return;
     if (event.key === 'ArrowLeft' && current > 1) api.navigate(sessionUrl(current - 1));
     if (event.key === 'ArrowRight' && current < 16) api.navigate(sessionUrl(current + 1));
   });

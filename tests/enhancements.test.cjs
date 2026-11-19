@@ -388,3 +388,51 @@ test('la visibilidad de los controles se recalcula al terminar de cargar la pág
   assert.ok(doc.querySelector('.floating-stack').classList.contains('is-hidden'));
   dom.window.close();
 });
+
+test('los atajos funcionan con el foco en las casillas de progreso', async () => {
+  const { dom, doc, win, navigated } = await load(page(7));
+  const box = doc.querySelector('#detailed-codelab .step-done input');
+  box.focus();
+  key(win, box, { key: 'ArrowRight' });
+  assert.deepEqual(navigated, ['sesion-08.html']);
+  const all = doc.querySelector('#detailed-codelab .steps-all input');
+  all.focus();
+  key(win, all, { key: '/' });
+  const palette = doc.querySelector('.search-palette');
+  assert.ok(palette && !palette.hidden, 'la búsqueda no se abrió con el foco en «Marcar todos»');
+  dom.window.close();
+});
+
+test('el aviso Continuar se actualiza al cambiar la posición o al volver atrás', async () => {
+  const { dom, doc, win } = await load('index.html', { storage: { curso_flutter_last: '{"session":3,"step":2,"label":"1","ts":1}' } });
+  assert.match(doc.querySelector('.resume-banner strong').textContent, /Sesión 3 · paso 1/);
+  win.localStorage.setItem('curso_flutter_last', '{"session":7,"step":6,"label":"5","ts":2}');
+  win.dispatchEvent(new win.StorageEvent('storage', { key: 'curso_flutter_last' }));
+  assert.match(doc.querySelector('.resume-banner strong').textContent, /Sesión 7 · paso 5/);
+  assert.equal(doc.querySelector('.resume-banner a').getAttribute('href'), 'sesion-07.html#paso-6');
+  assert.equal(doc.querySelectorAll('.resume-banner').length, 1);
+  // Restaurada desde la caché de ida y vuelta, sin evento storage.
+  win.localStorage.setItem('curso_flutter_last', '{"session":9,"step":1,"label":"0","ts":3}');
+  const restored = new win.Event('pageshow');
+  Object.defineProperty(restored, 'persisted', { value: true });
+  win.dispatchEvent(restored);
+  assert.match(doc.querySelector('.resume-banner strong').textContent, /Sesión 9 · paso 0/);
+  win.localStorage.removeItem('curso_flutter_last');
+  win.dispatchEvent(new win.StorageEvent('storage', { key: 'curso_flutter_last' }));
+  assert.equal(doc.querySelector('.resume-banner'), null);
+  dom.window.close();
+});
+
+test('el scroll se procesa aunque el navegador no ejecute requestAnimationFrame', async () => {
+  const { dom, doc, win } = await load(page(5), { stepTop: 100 });
+  win.requestAnimationFrame = () => 0; // dibujado congelado (pestaña en segundo plano, ahorro de energía)
+  const original = win.Element.prototype.getBoundingClientRect;
+  win.Element.prototype.getBoundingClientRect = function () {
+    if (this.classList?.contains('lab-step')) return { top: 2000, bottom: 2300, left: 0, right: 300, width: 300, height: 300 };
+    return original.call(this);
+  };
+  win.dispatchEvent(new win.Event('scroll'));
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  assert.ok(doc.querySelector('.floating-stack').classList.contains('is-hidden'));
+  dom.window.close();
+});
