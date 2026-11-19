@@ -4,7 +4,7 @@
   "private": true,
   "description": "Verificaciones de contenido y navegación del codelab estático",
   "scripts": {
-    "test": "python3 scripts/verify_content.py && node --test tests/codelab.test.cjs"
+    "test": "python3 scripts/verify_content.py && node --test "tests/*.test.cjs""
   },
   "devDependencies": {
     "jsdom": "31.0.1"

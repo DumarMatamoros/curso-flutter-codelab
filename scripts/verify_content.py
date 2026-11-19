@@ -4,11 +4,16 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-THEME_HEAD = '  <link rel="stylesheet" href="theme.css" />\n  <script src="theme.js"></script>\n'
+THEME_HEAD = (
+    '  <link rel="stylesheet" href="theme.css" />\n'
+    '  <script src="theme.js"></script>\n'
+    '  <link rel="stylesheet" href="enhancements.css" />\n'
+    '  <script src="enhancements.js" defer></script>\n'
+)
 
 
 def verify():
-    manifest = json.loads((ROOT / 'tests/original-content.json').read_text())
+    manifest = json.loads((ROOT / 'tests/original-content.json').read_text(encoding='utf-8'))
     errors = []
     for name, expected in manifest['files'].items():
         path = ROOT / name
@@ -19,13 +24,13 @@ def verify():
         if path.suffix == '.html':
             text = data.decode('utf-8')
             if text.count(THEME_HEAD) != 1:
-                errors.append(f'{name}: falta o se duplicó la integración del tema')
+                errors.append(f'{name}: falta o se duplicó la integración del tema y las mejoras')
             data = text.replace(THEME_HEAD, '').encode('utf-8')
         if hashlib.sha256(data).hexdigest() != expected:
             errors.append(f'{name}: difiere del original publicado')
     if errors:
         raise SystemExit('\n'.join(errors))
-    print(f"OK: {len(manifest['files'])} archivos idénticos al original, excluyendo la integración del tema.")
+    print(f"OK: {len(manifest['files'])} archivos idénticos al original, excluyendo la integración del tema y las mejoras.")
 
 
 if __name__ == '__main__':

@@ -15,6 +15,7 @@ function openPage(name, { saved = null, systemDark = false, storageBlocked = fal
   if (saved) win.localStorage.setItem('curso_flutter_theme', saved);
   if (storageBlocked) Object.defineProperty(win, 'localStorage', { get() { throw new Error('Storage bloqueado'); } });
   win.eval(read('theme.js'));
+  win.eval(read('enhancements.js'));
   win.document.dispatchEvent(new win.Event('DOMContentLoaded'));
   return { dom, win, media };
 }
@@ -151,5 +152,25 @@ test('las ocho semanas muestran sus dos sesiones y permiten desplegarlas', () =>
     toggle.click();
     assert.equal(toggle.getAttribute('aria-expanded'), 'true');
   });
+  dom.window.close();
+});
+
+test('todas las páginas cargan la capa de mejoras una sola vez', () => {
+  for (const name of fs.readdirSync(root).filter((name) => name.endsWith('.html'))) {
+    const dom = new JSDOM(read(name));
+    const doc = dom.window.document;
+    assert.equal(doc.querySelectorAll('link[href="enhancements.css"]').length, 1, name);
+    assert.equal(doc.querySelectorAll('script[src="enhancements.js"][defer]').length, 1, name);
+    dom.window.close();
+  }
+});
+
+test('el menú de codelabs usa los mismos títulos que app.js', () => {
+  const { dom, win } = openPage('codelabs.html');
+  win.eval(read('app.js'));
+  const expected = Array.from(win.courseWeeks.flatMap((w) => w.sessions.map((s) => `${s.number}${s.title}`)));
+  win.eval(read('codelab-navigation.js'));
+  const actual = Array.from(win.document.querySelectorAll('.sidebar-week a'), (a) => a.textContent);
+  assert.deepEqual(actual, expected);
   dom.window.close();
 });

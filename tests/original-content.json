@@ -19,7 +19,7 @@
     "codelab-15.html": "c394e97a9ff2d4389e6b822c9bbf57e7bf8679deceed606564840c8aad1557be",
     "codelab-16.html": "70764ef256fa3df3df00c07893e463df847204f32eb6d9f088af40aa04b7d1a4",
     "codelab-navigation.css": "826357a5a6b07830810eb56e6132aedb4bc1c0275c4e7ee7cea3d4b28d7145d2",
-    "codelab-navigation.js": "40bff2506650ecd9d8f8d3d5effa98648d76973eeaa615292153becd6b030aa2",
+    "codelab-navigation.js": "31e3f17e363027fcc7507acc35b41cb8d45e1d4c09cb523af27d04febc5fbea8",
     "codelabs.html": "49a672d3a93508f5a664c2188483dd4faa60cf67c6047d1e1525546c4416267d",
     "especificaciones.html": "aa79d8c8cb94b86ec5a7c6b929ea217a4a638e6614602c8feaaf90146951d31e",
     "index.html": "9c2106bbb5f1257d1d48e28d1172109e2fc86511f3e9eb325d01701e092f5418",
@@ -43,5 +43,8 @@
     "session-page.js": "253382dd105f55d8c438f72bdd00e5f1d95608f30e0738c8cdfe9ec0a0836824",
     "styles.css": "75b6cecb5b231de878eaaf5104a6583ac88bb80bde4e07f8daf7e538b85e1acd",
     "syntax.js": "8f91c4f7c555320106eb0ab1a21bb94b1d6b2e13f318878570d99ed892cb5cf3"
+  },
+  "exceptions": {
+    "codelab-navigation.js": "Títulos de las sesiones 9 a 12 y 16 alineados con app.js (fuente de verdad); el original los tenía desfasados."
   }
 }
