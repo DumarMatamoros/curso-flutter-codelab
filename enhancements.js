@@ -129,7 +129,8 @@
 
     steps.forEach((step, index) => {
       const number = index + 1;
-      if (!step.id) step.id = `paso-${number}`;
+      // En páginas con varios codelabs (codelabs.html) el id lleva el número de sesión para no repetirse.
+      if (!step.id) step.id = isSingleCodelabPage() ? `paso-${number}` : `codelab-${session}-paso-${number}`;
       const label = document.createElement('label');
       label.className = 'step-done';
       label.innerHTML = '<input type="checkbox"><span>Hecho</span>';
@@ -165,11 +166,12 @@
     return index;
   }
 
-  // Los controles flotantes aparecen al llegar a los pasos; en móvil se ocultan mientras se baja.
-  function floatingVisible({ firstStepTop, viewport, direction, narrow }) {
+  // Los controles flotantes aparecen al llegar a los pasos; si taparían el contenido, se ocultan mientras se baja.
+  // crowded: los controles taparían el contenido (móvil o ventana de escritorio estrecha).
+  function floatingVisible({ firstStepTop, viewport, direction, crowded }) {
     if (firstStepTop === null) return true;
     if (firstStepTop > viewport * 0.6) return false;
-    return !(narrow && direction === 'down');
+    return !(crowded && direction === 'down');
   }
 
   let tracked = null; // { section, session, current }
@@ -266,7 +268,6 @@
     let scheduled = false;
     let lastY = window.scrollY;
     let direction = 'none';
-    const narrow = () => window.matchMedia?.('(max-width: 800px)').matches;
     const update = () => {
       scheduled = false;
       const max = document.documentElement.scrollHeight - window.innerHeight;
@@ -280,11 +281,13 @@
       }
       const firstStep = tracked && stepsOf(tracked.section)[0];
       const pillOpen = document.querySelector('.step-pill-toggle[aria-expanded="true"]');
+      const stackLeft = floatingStack().getBoundingClientRect().left;
+      const contentRight = tracked ? tracked.section.getBoundingClientRect().right : 0;
       const visible = pillOpen || floatingVisible({
         firstStepTop: firstStep ? firstStep.getBoundingClientRect().top : null,
         viewport: window.innerHeight,
         direction,
-        narrow: !!narrow()
+        crowded: contentRight > stackLeft - 8
       });
       floatingStack().classList.toggle('is-hidden', !visible);
       trackScroll();
@@ -602,6 +605,26 @@
     (opener && opener !== document.body && document.contains(opener) ? opener : fallback)?.focus();
   }
 
+  // Los codelabs independientes (codelab-NN.html) no traen navegación: se añade el regreso al índice
+  // y el enlace a la vista de sesión, que incluye el menú lateral y el paginador.
+  function placeToolbarLinks() {
+    const bar = document.querySelector('.theme-toolbar');
+    const match = /codelab-(\d{2})\.html$/.exec(window.location.pathname);
+    if (!bar || !match || bar.querySelector('.toolbar-links')) return;
+    const number = Number(match[1]);
+    const links = document.createElement('nav');
+    links.className = 'toolbar-links';
+    links.setAttribute('aria-label', 'Navegación del codelab');
+    const home = document.createElement('a');
+    home.href = 'codelabs.html';
+    home.textContent = '← Índice de codelabs';
+    const session = document.createElement('a');
+    session.href = sessionUrl(number);
+    session.textContent = `Abrir en la sesión ${number}`;
+    links.append(home, session);
+    bar.prepend(links);
+  }
+
   function placeSearchButton() {
     const host = document.querySelector('.nav, .theme-toolbar');
     if (!host) return;
@@ -682,6 +705,7 @@
   function init() {
     buildReadingAids();
     placeSearchButton();
+    placeToolbarLinks();
     buildResumeBanner();
     enhanceAll(document);
     // session-page.js inserta el codelab de forma asíncrona: se mejora cuando aparece.
@@ -713,5 +737,8 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
   // theme.js crea su botón en DOMContentLoaded: se recoloca la búsqueda junto a él.
-  document.addEventListener('DOMContentLoaded', placeSearchButton);
+  document.addEventListener('DOMContentLoaded', () => {
+    placeSearchButton();
+    placeToolbarLinks();
+  });
 })();

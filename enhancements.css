@@ -1,3 +1,5 @@
+/* Los codelabs independientes (codelab-NN.html) no enlazan las fuentes del sitio. */
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap");
 /* Mejoras de experiencia: progreso, navegación, búsqueda, lectura e impresión.
    Usa las variables de styles.css/theme.css para funcionar en ambos temas. */
 :root {
@@ -495,3 +497,9 @@ pre { max-width: 100%; overflow-x: auto; }
   .step-done { min-height: 44px; padding-inline: 12px 14px; }
   .step-done input { width: 20px; height: 20px; }
 }
+
+/* ---------- Navegación en los codelabs independientes ---------- */
+.toolbar-links { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin-right: auto; }
+.toolbar-links a { color: var(--enh-accent); font: 700 .88rem Manrope, Arial, sans-serif; text-decoration: none; }
+.toolbar-links a:hover { text-decoration: underline; }
+.theme-toolbar { align-items: center; flex-wrap: wrap; }

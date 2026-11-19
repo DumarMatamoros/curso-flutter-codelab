@@ -275,14 +275,15 @@ test('el paso actual se calcula desde la posición de scroll', async () => {
   dom.window.close();
 });
 
-test('los controles flotantes aparecen al llegar a los pasos y se ocultan al bajar en móvil', async () => {
+test('los controles flotantes aparecen al llegar a los pasos y se ocultan al bajar si taparían el contenido', async () => {
   const { dom, api } = await load('index.html');
   const show = api.floatingVisible;
-  assert.equal(show({ firstStepTop: 1200, viewport: 800, direction: 'none', narrow: false }), false);
-  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'down', narrow: false }), true);
-  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'down', narrow: true }), false);
-  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'up', narrow: true }), true);
-  assert.equal(show({ firstStepTop: null, viewport: 800, direction: 'none', narrow: true }), true);
+  assert.equal(show({ firstStepTop: 1200, viewport: 800, direction: 'none', crowded: false }), false);
+  // crowded: los controles taparían el contenido (móvil o ventanas de escritorio estrechas)
+  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'down', crowded: false }), true);
+  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'down', crowded: true }), false);
+  assert.equal(show({ firstStepTop: 300, viewport: 800, direction: 'up', crowded: true }), true);
+  assert.equal(show({ firstStepTop: null, viewport: 800, direction: 'none', crowded: true }), true);
   dom.window.close();
 });
 
@@ -302,4 +303,22 @@ test('en las sesiones el menú lateral se puede plegar y empieza plegado', async
   const index = await load('codelabs.html');
   assert.equal(index.doc.querySelector('button.sidebar-toggle'), null);
   index.dom.window.close();
+});
+
+test('codelabs.html no repite ids aunque tenga varios codelabs', async () => {
+  const { dom, doc } = await load('codelabs.html');
+  const ids = Array.from(doc.querySelectorAll('[id]'), (el) => el.id);
+  assert.deepEqual(ids.filter((id, i) => ids.indexOf(id) !== i), []);
+  assert.equal(doc.querySelector('#codelab-2 .lab-step').id, 'codelab-2-paso-1');
+  dom.window.close();
+});
+
+test('los codelabs independientes enlazan al índice y a su vista de sesión', async () => {
+  const { dom, doc } = await load('codelab-09.html');
+  const bar = doc.querySelector('.theme-toolbar');
+  assert.ok(bar.querySelector('a[href="codelabs.html"]'), 'falta el enlace al índice');
+  const session = bar.querySelector('a[href="sesion-09.html"]');
+  assert.ok(session, 'falta el enlace a la vista de sesión');
+  assert.match(session.textContent, /sesión 9/i);
+  dom.window.close();
 });
