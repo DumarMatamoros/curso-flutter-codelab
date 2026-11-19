@@ -581,6 +581,18 @@
     if (event.key === 'ArrowRight' && current < 16) api.navigate(sessionUrl(current + 1));
   });
 
+  // ---------- Impresión: muestra las explicaciones plegadas y luego restaura el estado ----------
+  let printState = null;
+  window.addEventListener('beforeprint', () => {
+    const details = Array.from(document.querySelectorAll('details'));
+    printState = details.map((d) => [d, d.open]);
+    details.forEach((d) => { d.open = true; });
+  });
+  window.addEventListener('afterprint', () => {
+    printState?.forEach(([d, open]) => { d.open = open; });
+    printState = null;
+  });
+
   function init() {
     buildReadingAids();
     placeSearchButton();

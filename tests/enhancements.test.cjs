@@ -215,3 +215,17 @@ test('al abrir sesion-07.html#paso-3 se desplaza al paso tras la carga asíncron
   assert.ok(scrolled.includes('paso-3'));
   dom.window.close();
 });
+
+test('beforeprint abre los details y afterprint restaura su estado', async () => {
+  const { dom, doc, win } = await load('codelab-05.html');
+  const details = Array.from(doc.querySelectorAll('details'));
+  assert.ok(details.length > 0);
+  details.forEach((d, i) => { d.open = i > 0; });
+  const before = details.map((d) => d.open);
+  assert.equal(before[0], false);
+  win.dispatchEvent(new win.Event('beforeprint'));
+  assert.ok(details.every((d) => d.open));
+  win.dispatchEvent(new win.Event('afterprint'));
+  assert.deepEqual(details.map((d) => d.open), before);
+  dom.window.close();
+});

@@ -360,3 +360,61 @@
   .session-pager { grid-template-columns: 1fr; }
   .session-pager .pager-next { grid-column: auto; }
 }
+
+/* ---------- Lectura ---------- */
+.codelab-content :is(.lab-step, .learning-box, .challenge, .common-errors) :is(p, li, dd) {
+  max-width: 72ch;
+  line-height: 1.7;
+}
+.codelab-content .lab-step h3 {
+  font-size: clamp(1.3rem, 2.2vw, 1.5rem);
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+.codelab-content .lab-step { padding-block: 36px; }
+.codelab-content .lab-step li + li { margin-top: 4px; }
+
+/* ---------- Impresión ---------- */
+@media print {
+  :root, :root[data-theme="dark"] {
+    color-scheme: light;
+    --ink: #000;
+    --muted: #333;
+    --paper: #fff;
+    --cloud: #fff;
+    --line: #bbb;
+    --purple: #3b32b5;
+    --enh-surface: #fff;
+  }
+  html, body, .codelab-page, .session-page, .codelab-section, .codelab-section.alternate,
+  .codelab-hero, .session-page-hero, .hero, .project-hero {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  :is(.hero, .project-hero)::before { display: none !important; }
+  .nav, .theme-toolbar, .codelab-sidebar, .theme-toggle, .search-open, .search-palette,
+  .floating-stack, .reading-progress, .code-copy, .step-done, .session-pager,
+  .resume-banner, footer, .step-progress {
+    display: none !important;
+  }
+  .codelab-layout, .session-codelab-layout { display: block !important; }
+  * { box-shadow: none !important; text-shadow: none !important; }
+  :is(.learning-box, .explain, .challenge, .common-errors, .lab-step details, .concept-card, .callout, .warning) {
+    background: #fff !important;
+    color: #000 !important;
+    border: 1px solid #bbb !important;
+  }
+  .lab-step pre, pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    break-inside: avoid;
+    background: #f4f4f6 !important;
+    color: #000 !important;
+    border: 1px solid #ccc;
+  }
+  pre * { color: #000 !important; }
+  .lab-step { break-inside: avoid-page; }
+  h2, h3 { break-after: avoid; }
+  .step-number { background: #000 !important; color: #fff !important; print-color-adjust: exact; }
+  a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; color: #333; }
+}
