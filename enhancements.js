@@ -53,6 +53,17 @@
     window.dispatchEvent(new CustomEvent('codelabprogress', { detail: { session } }));
   }
 
+  // Marca o desmarca de una vez todos los pasos (1..total) de una sesión.
+  function setStepsDone(session, total, done) {
+    const progress = readProgress();
+    const key = String(session);
+    if (done && total > 0) progress[key] = Array.from({ length: total }, (_, i) => i + 1);
+    else delete progress[key];
+    memoryProgress = progress;
+    writeJson(PROGRESS_KEY, progress);
+    window.dispatchEvent(new CustomEvent('codelabprogress', { detail: { session } }));
+  }
+
   function sessionProgress(session, total) {
     const done = (readProgress()[String(session)] || []).filter((step) => step <= total).length;
     return { done, total, complete: total > 0 && done === total };
@@ -116,6 +127,12 @@
       bar.max = status.total;
       bar.value = status.done;
       counter.classList.toggle('is-complete', status.complete);
+      const all = counter.querySelector('.steps-all input');
+      if (all) {
+        all.checked = status.complete;
+        all.indeterminate = status.done > 0 && !status.complete;
+        counter.querySelector('.steps-all-text').textContent = status.complete ? 'Desmarcar todos' : 'Marcar todos';
+      }
     }
   }
 
@@ -147,7 +164,12 @@
     const counter = document.createElement('div');
     counter.className = 'step-progress';
     counter.setAttribute('role', 'status');
-    counter.innerHTML = '<span class="step-progress-text"></span><progress aria-label="Progreso del codelab"></progress>';
+    counter.innerHTML = '<span class="step-progress-text"></span><progress aria-label="Progreso del codelab"></progress>'
+      + '<label class="steps-all"><input type="checkbox"><span class="steps-all-text">Marcar todos</span></label>';
+    const all = counter.querySelector('.steps-all input');
+    all.setAttribute('aria-label', `Marcar todos los pasos de la sesión ${session}`);
+    // Desde «a medias» el navegador marca la casilla: se completan todos los pasos.
+    all.addEventListener('change', () => setStepsDone(session, steps.length, all.checked));
     const title = section.querySelector('.codelab-title');
     if (title) title.after(counter); else section.prepend(counter);
 
@@ -292,6 +314,12 @@
       floatingStack().classList.toggle('is-hidden', !visible);
       trackScroll();
     };
+    // Al aparecer un codelab (también tras la carga asíncrona) se recalcula sin esperar al scroll.
+    window.addEventListener('codelabenhanced', update);
+    // El diseño cambia al cargar las fuentes o imágenes y al redimensionar: se vuelve a calcular.
+    window.addEventListener('load', update);
+    window.addEventListener('resize', update);
+    document.fonts?.ready?.then(update);
     window.addEventListener('scroll', () => {
       if (scheduled) return;
       scheduled = true;
@@ -721,6 +749,7 @@
   Object.assign(api, {
     readProgress,
     setStepDone,
+    setStepsDone,
     sessionProgress,
     readLast,
     rememberPosition,

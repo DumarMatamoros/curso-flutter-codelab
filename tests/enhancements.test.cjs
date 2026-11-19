@@ -8,11 +8,19 @@ const read = (name) => fs.readFileSync(path.join(root, name), 'utf8');
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 
 // Reproduce el orden real del navegador: scripts del documento y, al final, los diferidos.
-async function load(name, { storage = {}, storageBlocked = false, scripts, hash = '' } = {}) {
+async function load(name, { storage = {}, storageBlocked = false, scripts, hash = '', stepTop = null } = {}) {
   const dom = new JSDOM(read(name), { url: `https://example.test/curso/${name}${hash}`, runScripts: 'outside-only' });
   const win = dom.window;
   const scrolled = [];
   win.Element.prototype.scrollIntoView = function () { scrolled.push(this.id); };
+  if (stepTop !== null) {
+    // jsdom no calcula diseño: simula pasos por debajo de la ventana visible.
+    const original = win.Element.prototype.getBoundingClientRect;
+    win.Element.prototype.getBoundingClientRect = function () {
+      if (this.classList?.contains('lab-step')) return { top: stepTop, bottom: stepTop + 300, left: 0, right: 300, width: 300, height: 300 };
+      return original.call(this);
+    };
+  }
   win.matchMedia = () => Object.assign(new win.EventTarget(), { matches: false });
   for (const [key, value] of Object.entries(storage)) win.localStorage.setItem(key, value);
   if (storageBlocked) Object.defineProperty(win, 'localStorage', { get() { throw new Error('bloqueado'); } });
@@ -320,5 +328,63 @@ test('los codelabs independientes enlazan al índice y a su vista de sesión', a
   const session = bar.querySelector('a[href="sesion-09.html"]');
   assert.ok(session, 'falta el enlace a la vista de sesión');
   assert.match(session.textContent, /sesión 9/i);
+  dom.window.close();
+});
+
+test('el check general marca y desmarca todos los pasos de la sesión', async () => {
+  const { dom, doc } = await load(page(5));
+  const all = doc.querySelector('#detailed-codelab .steps-all input[type=checkbox]');
+  assert.ok(all, 'falta el check general');
+  assert.equal(all.getAttribute('aria-label'), 'Marcar todos los pasos de la sesión 5');
+  const boxes = () => Array.from(doc.querySelectorAll('#detailed-codelab .step-done input'));
+  all.click();
+  assert.ok(boxes().every((b) => b.checked));
+  assert.match(doc.querySelector('#detailed-codelab .step-progress-text').textContent, new RegExp(`^${boxes().length}/${boxes().length}`));
+  assert.ok(doc.querySelector('.sidebar-week a[href="sesion-05.html"]').classList.contains('is-complete'));
+  assert.equal(all.checked, true);
+  assert.match(doc.querySelector('#detailed-codelab .steps-all').textContent, /Desmarcar todos/);
+  all.click();
+  assert.ok(boxes().every((b) => !b.checked));
+  assert.equal(all.checked, false);
+  assert.match(doc.querySelector('#detailed-codelab .steps-all').textContent, /Marcar todos/);
+  dom.window.close();
+});
+
+test('el check general queda a medias con progreso parcial', async () => {
+  const { dom, doc } = await load(page(5), { storage: { curso_flutter_progress: '{"5":[2]}' } });
+  const all = doc.querySelector('#detailed-codelab .steps-all input');
+  assert.equal(all.indeterminate, true);
+  assert.equal(all.checked, false);
+  all.click(); // desde a medias, completa todo
+  assert.ok(Array.from(doc.querySelectorAll('#detailed-codelab .step-done input')).every((b) => b.checked));
+  assert.equal(all.indeterminate, false);
+  dom.window.close();
+});
+
+test('en codelabs.html cada check general afecta sólo a su codelab', async () => {
+  const { dom, doc } = await load('codelabs.html');
+  doc.querySelector('#codelab-2 .steps-all input').click();
+  assert.ok(Array.from(doc.querySelectorAll('#codelab-2 .step-done input')).every((b) => b.checked));
+  assert.ok(Array.from(doc.querySelectorAll('#codelab-1 .step-done input')).every((b) => !b.checked));
+  dom.window.close();
+});
+
+test('los controles flotantes empiezan ocultos si los pasos aún no están en pantalla', async () => {
+  const { dom, doc } = await load(page(5), { stepTop: 2000 });
+  assert.ok(doc.querySelector('.floating-stack').classList.contains('is-hidden'));
+  dom.window.close();
+});
+
+test('la visibilidad de los controles se recalcula al terminar de cargar la página', async () => {
+  // Simula que, antes de cargar fuentes, el primer paso estaba arriba y luego baja.
+  const { dom, doc, win } = await load(page(5), { stepTop: 100 });
+  assert.equal(doc.querySelector('.floating-stack').classList.contains('is-hidden'), false);
+  const original = win.Element.prototype.getBoundingClientRect;
+  win.Element.prototype.getBoundingClientRect = function () {
+    if (this.classList?.contains('lab-step')) return { top: 2000, bottom: 2300, left: 0, right: 300, width: 300, height: 300 };
+    return original.call(this);
+  };
+  win.dispatchEvent(new win.Event('load'));
+  assert.ok(doc.querySelector('.floating-stack').classList.contains('is-hidden'));
   dom.window.close();
 });

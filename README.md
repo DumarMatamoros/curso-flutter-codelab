@@ -8,7 +8,7 @@ El curso contiene **8 semanas, 16 sesiones y 40 horas**, con los laboratorios co
 
 ## Mejoras para seguir los codelabs
 
-- **Progreso por paso:** cada paso tiene una casilla *Hecho*; la cabecera muestra `N/M pasos` y el menú lateral marca las sesiones empezadas (•) y terminadas (✓). Se guarda en el navegador.
+- **Progreso por paso:** cada paso tiene una casilla *Hecho* y cada codelab un check general (*Marcar todos* / *Desmarcar todos*, a medias si hay progreso parcial); la cabecera muestra `N/M pasos` y el menú lateral marca las sesiones empezadas (•) y terminadas (✓). Se guarda en el navegador.
 - **Continuar donde lo dejaste:** la portada y el índice de codelabs enlazan a la última sesión y paso visitados.
 - **Navegador de pasos:** una píldora fija («Paso 3 · 4/9») abre la lista de pasos del codelab.
 - **Barra de lectura y botón para volver arriba.**

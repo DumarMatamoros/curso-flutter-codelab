@@ -503,3 +503,40 @@ pre { max-width: 100%; overflow-x: auto; }
 .toolbar-links a { color: var(--enh-accent); font: 700 .88rem Manrope, Arial, sans-serif; text-decoration: none; }
 .toolbar-links a:hover { text-decoration: underline; }
 .theme-toolbar { align-items: center; flex-wrap: wrap; }
+
+/* ---------- Check general de la sesión ---------- */
+.step-progress { flex-wrap: wrap; }
+.steps-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 5px 12px 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--enh-surface);
+  color: var(--ink);
+  font: 700 .78rem Manrope, Arial, sans-serif;
+  cursor: pointer;
+  user-select: none;
+}
+.steps-all input { width: 16px; height: 16px; margin: 0; accent-color: var(--enh-done); cursor: pointer; }
+.steps-all:hover { border-color: var(--enh-accent); }
+.steps-all:has(input:focus-visible) { outline: 3px solid var(--purple); outline-offset: 3px; }
+.step-progress.is-complete .steps-all { border-color: var(--enh-done); background: var(--enh-done-soft); color: var(--enh-done); }
+.step-progress { max-width: 900px; }
+
+/* ---------- Codelabs independientes en móvil: enlaces en una fila, botones en la siguiente ---------- */
+@media (max-width: 560px) {
+  .theme-toolbar .toolbar-links { flex-basis: 100%; margin-right: 0; }
+  .theme-toolbar .search-open { margin-left: auto; }
+}
+
+/* ---------- Zonas táctiles más grandes sin mover el diseño ---------- */
+@media (pointer: coarse) {
+  .steps-all { min-height: 44px; padding-inline: 12px 14px; }
+  .steps-all input { width: 20px; height: 20px; }
+  .code-copy { min-height: 34px; padding-inline: 12px; }
+  .lab-step summary { padding-block: 10px; }
+  :is(.brand, .toolbar-links a) { padding-block: 8px; margin-block: -8px; }
+}
