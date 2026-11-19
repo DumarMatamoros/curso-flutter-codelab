@@ -95,3 +95,32 @@ test('restaura el progreso guardado y lo sincroniza entre pestañas', async () =
   assert.equal(boxes[1].checked, false);
   dom.window.close();
 });
+
+test('la píldora lista los pasos y se abre con el botón', async () => {
+  const { dom, doc, win } = await load(page(5));
+  const pill = doc.querySelector('.step-pill');
+  assert.ok(pill, 'falta la píldora');
+  const steps = doc.querySelectorAll('#detailed-codelab .lab-step');
+  const links = pill.querySelectorAll('a[href^="#paso-"]');
+  assert.equal(links.length, steps.length);
+  const toggle = pill.querySelector('button');
+  assert.match(toggle.textContent, new RegExp(`Paso 1 de ${steps.length}`));
+  toggle.click();
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  win.dispatchEvent(new win.CustomEvent('codelabstep', { detail: { session: 5, step: 3 } }));
+  assert.match(toggle.textContent, /Paso 3 de/);
+  assert.equal(links[2].getAttribute('aria-current'), 'step');
+  doc.activeElement.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(doc.activeElement, toggle);
+  dom.window.close();
+});
+
+test('index.html no muestra la píldora pero sí la barra de lectura y volver arriba', async () => {
+  const { dom, doc } = await load('index.html');
+  assert.equal(doc.querySelector('.step-pill'), null);
+  assert.ok(doc.querySelector('.reading-progress[aria-hidden="true"] span'));
+  const top = doc.querySelector('.back-to-top');
+  assert.equal(top.getAttribute('aria-label'), 'Volver arriba');
+  dom.window.close();
+});

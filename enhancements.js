@@ -213,7 +213,126 @@
     }
   });
 
+  // ---------- Lectura: barra de progreso, volver arriba y píldora de pasos ----------
+  const reduceMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const scrollBehavior = () => (reduceMotion() ? 'auto' : 'smooth');
+
+  function buildReadingAids() {
+    const bar = document.createElement('div');
+    bar.className = 'reading-progress';
+    bar.setAttribute('aria-hidden', 'true');
+    bar.innerHTML = '<span></span>';
+    document.body.prepend(bar);
+
+    const top = document.createElement('button');
+    top.type = 'button';
+    top.className = 'back-to-top floating-control';
+    top.setAttribute('aria-label', 'Volver arriba');
+    top.title = 'Volver arriba';
+    top.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+    top.addEventListener('click', () => window.scrollTo({ top: 0, behavior: scrollBehavior() }));
+    floatingStack().append(top);
+
+    let scheduled = false;
+    const update = () => {
+      scheduled = false;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      bar.firstChild.style.transform = `scaleX(${ratio})`;
+      top.classList.toggle('is-visible', window.scrollY > 600);
+    };
+    window.addEventListener('scroll', () => {
+      if (scheduled) return;
+      scheduled = true;
+      (window.requestAnimationFrame || window.setTimeout)(update);
+    }, { passive: true });
+    update();
+  }
+
+  function floatingStack() {
+    let stack = document.querySelector('.floating-stack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.className = 'floating-stack';
+      document.body.append(stack);
+    }
+    return stack;
+  }
+
+  function buildStepPill(section, session) {
+    if (!isSingleCodelabPage() || document.querySelector('.step-pill')) return;
+    const steps = stepsOf(section);
+    const nav = document.createElement('nav');
+    nav.className = 'step-pill';
+    nav.setAttribute('aria-label', 'Pasos del codelab');
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'step-pill-toggle floating-control';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-controls', 'step-pill-list');
+    const list = document.createElement('ol');
+    list.id = 'step-pill-list';
+    list.className = 'step-pill-list';
+    list.hidden = true;
+    steps.forEach((step, index) => {
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = `#${step.id}`;
+      const heading = step.querySelector('h3');
+      link.textContent = heading ? heading.textContent.trim() : `Paso ${index + 1}`;
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        close(false);
+        step.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+        step.querySelector('h3')?.setAttribute('tabindex', '-1');
+        step.querySelector('h3')?.focus({ preventScroll: true });
+        setCurrent(index + 1);
+      });
+      item.append(link);
+      list.append(item);
+    });
+    nav.append(list, toggle);
+
+    function setCurrent(number) {
+      toggle.innerHTML = `<span class="step-pill-label">Paso ${number} de ${steps.length}</span><span aria-hidden="true">▴</span>`;
+      list.querySelectorAll('a').forEach((link, index) => {
+        if (index + 1 === number) link.setAttribute('aria-current', 'step');
+        else link.removeAttribute('aria-current');
+      });
+    }
+    function open() {
+      list.hidden = false;
+      toggle.setAttribute('aria-expanded', 'true');
+      (list.querySelector('[aria-current]') || list.querySelector('a'))?.focus();
+    }
+    function close(returnFocus = true) {
+      list.hidden = true;
+      toggle.setAttribute('aria-expanded', 'false');
+      if (returnFocus) toggle.focus();
+    }
+    toggle.addEventListener('click', () => (list.hidden ? open() : close()));
+    nav.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !list.hidden) {
+        event.stopPropagation();
+        close();
+      }
+    });
+    document.addEventListener('click', (event) => {
+      if (!list.hidden && !nav.contains(event.target)) close(false);
+    });
+    window.addEventListener('codelabstep', (event) => {
+      if (event.detail.session === session) setCurrent(event.detail.step);
+    });
+
+    const hash = /^#paso-(\d+)$/.exec(window.location.hash);
+    setCurrent(hash ? Math.min(Number(hash[1]), steps.length) : 1);
+    floatingStack().prepend(nav);
+  }
+
+  window.addEventListener('codelabenhanced', (event) => buildStepPill(event.detail.section, event.detail.session));
+
   function init() {
+    buildReadingAids();
     enhanceAll(document);
     // session-page.js inserta el codelab de forma asíncrona: se mejora cuando aparece.
     if ('MutationObserver' in window) {
