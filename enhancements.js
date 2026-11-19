@@ -331,8 +331,260 @@
 
   window.addEventListener('codelabenhanced', (event) => buildStepPill(event.detail.section, event.detail.session));
 
+  // ---------- Sesiones, búsqueda y navegación ----------
+  // Respaldo para páginas que no cargan app.js; window.courseWeeks es la fuente de verdad.
+  const FALLBACK_SESSIONS = [
+    [1, 1, 'Introducción a Flutter, Dart y el entorno'],
+    [2, 1, 'Widgets, estado e interfaces básicas'],
+    [3, 2, 'Layouts, listas y componentes reutilizables'],
+    [4, 2, 'Navegación y comunicación entre pantallas'],
+    [5, 3, 'Especificación del proyecto y modelado de datos'],
+    [6, 3, 'Arquitectura MVVM y estructura por funcionalidades'],
+    [7, 4, 'HTTP, asincronía, JSON y modelos'],
+    [8, 4, 'Repository, ViewModel y estados asíncronos'],
+    [9, 5, 'Formularios y validación de datos'],
+    [10, 5, 'POST, PATCH/PUT y DELETE'],
+    [11, 6, 'Errores, excepciones y resiliencia'],
+    [12, 6, 'Pruebas unitarias y de widgets'],
+    [13, 7, 'Sesión, preferencias y persistencia ligera'],
+    [14, 7, 'Búsqueda, filtros y accesibilidad básica'],
+    [15, 8, 'Refactorización, documentación y preparación de entrega'],
+    [16, 8, 'Generación de APK y presentación escrita final']
+  ];
+
+  const stripTags = (html) => String(html || '').replace(/<[^>]*>/g, '');
+
+  function sessions() {
+    if (Array.isArray(window.courseWeeks)) {
+      return window.courseWeeks.flatMap((week) => week.sessions.map((session) => ({
+        number: session.number,
+        week: week.number,
+        title: session.title,
+        goal: stripTags(session.goal)
+      })));
+    }
+    return FALLBACK_SESSIONS.map(([number, week, title]) => ({ number, week, title, goal: '' }));
+  }
+
+  function normalize(text) {
+    return String(text).normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  }
+
+  function searchSessions(query) {
+    const words = normalize(query).split(/\s+/).filter(Boolean);
+    return sessions().filter((session) => {
+      const haystack = normalize(`${session.number} ${session.title} ${session.goal}`);
+      return words.every((word) => haystack.includes(word));
+    });
+  }
+
+  const sessionUrl = (number) => `sesion-${pad(number)}.html`;
+  const currentSessionNumber = () => Number(document.body.dataset.session) || null;
+
+  function navigate(url) {
+    window.location.href = url;
+  }
+
+  function isTyping(target) {
+    return !!target && (target.isContentEditable || /^(?:input|textarea|select)$/i.test(target.tagName || ''));
+  }
+
+  function buildPager(section) {
+    const current = currentSessionNumber();
+    if (!current || sessionOf(section) !== current || document.querySelector('.session-pager')) return;
+    const all = sessions();
+    const prev = all.find((s) => s.number === current - 1);
+    const next = all.find((s) => s.number === current + 1);
+    const pager = document.createElement('nav');
+    pager.className = 'session-pager';
+    pager.setAttribute('aria-label', 'Sesiones anterior y siguiente');
+    const link = (session, rel, label) => {
+      const a = document.createElement('a');
+      a.href = sessionUrl(session.number);
+      a.rel = rel;
+      a.className = `pager-${rel}`;
+      a.innerHTML = `<span class="pager-label"></span><strong></strong>`;
+      a.querySelector('.pager-label').textContent = `${label} · Sesión ${session.number}`;
+      a.querySelector('strong').textContent = session.title;
+      return a;
+    };
+    if (prev) pager.append(link(prev, 'prev', '← Anterior'));
+    if (next) pager.append(link(next, 'next', 'Siguiente →'));
+    section.after(pager);
+  }
+
+  function scrollToHashStep(section) {
+    if (!isSingleCodelabPage()) return;
+    const match = /^#(paso-\d+)$/.exec(window.location.hash);
+    const step = match && section.querySelector(`#${match[1]}`);
+    if (step) step.scrollIntoView({ block: 'start' });
+  }
+
+  window.addEventListener('codelabenhanced', (event) => {
+    buildPager(event.detail.section);
+    scrollToHashStep(event.detail.section);
+  });
+
+  function buildResumeBanner() {
+    const hero = document.querySelector('header.hero, header.codelab-hero');
+    const last = readLast();
+    if (!hero || !last || document.querySelector('.resume-banner')) return;
+    const session = sessions().find((s) => s.number === last.session);
+    const banner = document.createElement('aside');
+    banner.className = 'resume-banner container';
+    banner.setAttribute('aria-label', 'Retomar el curso');
+    banner.innerHTML = '<p><span class="resume-eyebrow">CONTINUAR DONDE LO DEJASTE</span><strong></strong><span class="resume-title"></span></p><a class="resume-link"></a>';
+    banner.querySelector('strong').textContent = `Sesión ${last.session} · paso ${last.step}`;
+    banner.querySelector('.resume-title').textContent = session ? session.title : '';
+    const link = banner.querySelector('a');
+    link.href = `${sessionUrl(last.session)}#paso-${last.step}`;
+    link.textContent = 'Continuar →';
+    hero.after(banner);
+  }
+
+  // Paleta de búsqueda: diálogo modal accesible con lista de opciones.
+  let palette;
+  let opener;
+
+  function buildPalette() {
+    palette = document.createElement('div');
+    palette.className = 'search-palette';
+    palette.setAttribute('role', 'dialog');
+    palette.setAttribute('aria-modal', 'true');
+    palette.setAttribute('aria-label', 'Buscar sesiones');
+    palette.hidden = true;
+    palette.innerHTML = `
+      <div class="search-panel">
+        <div class="search-field">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input type="search" placeholder="Buscar sesión, tema o número…" autocomplete="off" spellcheck="false"
+            role="combobox" aria-expanded="true" aria-controls="search-results" aria-autocomplete="list" aria-label="Buscar sesiones">
+          <kbd>Esc</kbd>
+        </div>
+        <ul id="search-results" class="search-results" role="listbox" aria-label="Resultados"></ul>
+        <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>Enter</kbd> abrir · <kbd>←</kbd><kbd>→</kbd> sesión anterior/siguiente</p>
+      </div>`;
+    document.body.append(palette);
+    const input = palette.querySelector('input');
+    const list = palette.querySelector('ul');
+    let results = [];
+    let selected = 0;
+
+    function render() {
+      results = searchSessions(input.value);
+      selected = Math.min(selected, Math.max(0, results.length - 1));
+      list.replaceChildren();
+      if (!results.length) {
+        const empty = document.createElement('li');
+        empty.className = 'search-empty';
+        empty.textContent = 'Sin resultados. Prueba con otra palabra.';
+        list.append(empty);
+        input.removeAttribute('aria-activedescendant');
+        return;
+      }
+      results.forEach((session, index) => {
+        const item = document.createElement('li');
+        item.id = `search-option-${session.number}`;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', String(index === selected));
+        item.innerHTML = '<span class="search-num"></span><span class="search-text"><strong></strong><small></small></span>';
+        item.querySelector('.search-num').textContent = pad(session.number);
+        item.querySelector('strong').textContent = session.title;
+        item.querySelector('small').textContent = `Semana ${session.week}`;
+        if (session.number === currentSessionNumber()) item.classList.add('is-current');
+        item.addEventListener('mousedown', (event) => event.preventDefault());
+        item.addEventListener('click', () => api.navigate(sessionUrl(session.number)));
+        list.append(item);
+      });
+      const active = list.children[selected];
+      input.setAttribute('aria-activedescendant', active.id);
+      active.scrollIntoView?.({ block: 'nearest' });
+    }
+
+    input.addEventListener('input', () => {
+      selected = 0;
+      render();
+    });
+    palette.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closePalette();
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (!results.length) return;
+        selected = (selected + (event.key === 'ArrowDown' ? 1 : -1) + results.length) % results.length;
+        render();
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        if (results[selected]) api.navigate(sessionUrl(results[selected].number));
+      } else if (event.key === 'Tab') {
+        event.preventDefault(); // el único control enfocable es el campo: se mantiene el foco dentro
+      }
+      event.stopPropagation();
+    });
+    palette.addEventListener('click', (event) => {
+      if (event.target === palette) closePalette();
+    });
+    palette.render = render;
+  }
+
+  function openPalette() {
+    if (!palette) buildPalette();
+    opener = document.activeElement;
+    palette.hidden = false;
+    document.documentElement.classList.add('search-open-lock');
+    const input = palette.querySelector('input');
+    input.value = '';
+    palette.render();
+    input.focus();
+  }
+
+  function closePalette() {
+    if (!palette || palette.hidden) return;
+    palette.hidden = true;
+    document.documentElement.classList.remove('search-open-lock');
+    const fallback = document.querySelector('.search-open');
+    (opener && opener !== document.body && document.contains(opener) ? opener : fallback)?.focus();
+  }
+
+  function placeSearchButton() {
+    const host = document.querySelector('.nav, .theme-toolbar');
+    if (!host) return;
+    let button = document.querySelector('.search-open');
+    if (!button) {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'search-open';
+      button.setAttribute('aria-label', 'Buscar sesiones (atajo: /)');
+      button.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="search-open-label">Buscar</span><kbd aria-hidden="true">/</kbd>';
+      button.addEventListener('click', () => {
+        openPalette();
+        opener = button;
+      });
+    }
+    const toggle = host.querySelector('.theme-toggle');
+    if (toggle) toggle.before(button);
+    else if (button.parentNode !== host) host.append(button);
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
+    if (palette && !palette.hidden) return;
+    if (event.key === '/') {
+      event.preventDefault();
+      openPalette();
+      return;
+    }
+    const current = currentSessionNumber();
+    if (!current || event.shiftKey) return;
+    if (event.key === 'ArrowLeft' && current > 1) api.navigate(sessionUrl(current - 1));
+    if (event.key === 'ArrowRight' && current < 16) api.navigate(sessionUrl(current + 1));
+  });
+
   function init() {
     buildReadingAids();
+    placeSearchButton();
+    buildResumeBanner();
     enhanceAll(document);
     // session-page.js inserta el codelab de forma asíncrona: se mejora cuando aparece.
     if ('MutationObserver' in window) {
@@ -351,9 +603,15 @@
     readLast,
     rememberPosition,
     enhanceCodelab,
-    pad
+    normalize,
+    searchSessions,
+    navigate,
+    openPalette,
+    closePalette
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
+  // theme.js crea su botón en DOMContentLoaded: se recoloca la búsqueda junto a él.
+  document.addEventListener('DOMContentLoaded', placeSearchButton);
 })();

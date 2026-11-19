@@ -8,9 +8,11 @@ const read = (name) => fs.readFileSync(path.join(root, name), 'utf8');
 const tick = () => new Promise((resolve) => setImmediate(resolve));
 
 // Reproduce el orden real del navegador: scripts del documento y, al final, los diferidos.
-async function load(name, { storage = {}, storageBlocked = false, scripts } = {}) {
-  const dom = new JSDOM(read(name), { url: `https://example.test/curso/${name}`, runScripts: 'outside-only' });
+async function load(name, { storage = {}, storageBlocked = false, scripts, hash = '' } = {}) {
+  const dom = new JSDOM(read(name), { url: `https://example.test/curso/${name}${hash}`, runScripts: 'outside-only' });
   const win = dom.window;
+  const scrolled = [];
+  win.Element.prototype.scrollIntoView = function () { scrolled.push(this.id); };
   win.matchMedia = () => Object.assign(new win.EventTarget(), { matches: false });
   for (const [key, value] of Object.entries(storage)) win.localStorage.setItem(key, value);
   if (storageBlocked) Object.defineProperty(win, 'localStorage', { get() { throw new Error('bloqueado'); } });
@@ -25,7 +27,7 @@ async function load(name, { storage = {}, storageBlocked = false, scripts } = {}
   win.document.dispatchEvent(new win.Event('DOMContentLoaded'));
   await tick();
   await tick();
-  return { dom, win, doc: win.document, api: win.CursoFlutterEnhancements, navigated };
+  return { dom, win, doc: win.document, api: win.CursoFlutterEnhancements, navigated, scrolled };
 }
 
 const page = (n) => `sesion-${String(n).padStart(2, '0')}.html`;
@@ -122,5 +124,94 @@ test('index.html no muestra la píldora pero sí la barra de lectura y volver ar
   assert.ok(doc.querySelector('.reading-progress[aria-hidden="true"] span'));
   const top = doc.querySelector('.back-to-top');
   assert.equal(top.getAttribute('aria-label'), 'Volver arriba');
+  dom.window.close();
+});
+
+const key = (win, target, init) => target.dispatchEvent(new win.KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init }));
+
+test('busca sin acentos ni mayúsculas', async () => {
+  for (const name of ['index.html', 'codelab-05.html']) {
+    const { dom, api } = await load(name);
+    const numbers = (q) => Array.from(api.searchSessions(q), (s) => s.number);
+    assert.ok(numbers('navegacion').includes(4), name);
+    assert.ok(numbers('APK').includes(16), name);
+    assert.deepEqual(numbers('zzz'), []);
+    assert.equal(numbers('').length, 16);
+    assert.deepEqual(numbers('busqueda filtros'), [14]);
+    assert.equal(api.normalize('Sesión ÁRBOL'), 'sesion arbol');
+    dom.window.close();
+  }
+});
+
+test('el paginador respeta los límites', async () => {
+  const first = await load(page(1));
+  assert.equal(first.doc.querySelector('.session-pager a[rel="prev"]'), null);
+  assert.equal(first.doc.querySelector('.session-pager a[rel="next"]').getAttribute('href'), 'sesion-02.html');
+  first.dom.window.close();
+  const last = await load(page(16));
+  assert.equal(last.doc.querySelector('.session-pager a[rel="next"]'), null);
+  assert.equal(last.doc.querySelector('.session-pager a[rel="prev"]').getAttribute('href'), 'sesion-15.html');
+  last.dom.window.close();
+});
+
+test('las flechas cambian de sesión salvo mientras se escribe', async () => {
+  const { dom, doc, win, navigated } = await load(page(7));
+  key(win, doc.body, { key: 'ArrowRight' });
+  assert.deepEqual(navigated, ['sesion-08.html']);
+  key(win, doc.body, { key: 'ArrowLeft', altKey: true });
+  assert.equal(navigated.length, 1);
+  key(win, doc.body, { key: '/' });
+  const input = doc.querySelector('.search-palette input[type=search]');
+  assert.equal(doc.activeElement, input);
+  key(win, input, { key: '/' });
+  key(win, input, { key: 'ArrowRight' });
+  assert.equal(doc.querySelectorAll('.search-palette').length, 1);
+  assert.deepEqual(navigated, ['sesion-08.html']);
+  dom.window.close();
+});
+
+test('la búsqueda abre el resultado con Enter y se cierra con Escape', async () => {
+  const { dom, doc, win, navigated } = await load('index.html');
+  doc.querySelector('.search-open').click();
+  const palette = doc.querySelector('.search-palette');
+  assert.equal(palette.getAttribute('role'), 'dialog');
+  assert.equal(palette.getAttribute('aria-modal'), 'true');
+  const input = palette.querySelector('input[type=search]');
+  input.value = 'filtros';
+  input.dispatchEvent(new win.Event('input', { bubbles: true }));
+  const options = palette.querySelectorAll('[role="option"]');
+  assert.equal(options.length, 1);
+  assert.equal(options[0].getAttribute('aria-selected'), 'true');
+  key(win, input, { key: 'Enter' });
+  assert.deepEqual(navigated, ['sesion-14.html']);
+  doc.querySelector('.search-open').click();
+  key(win, doc.querySelector('.search-palette input'), { key: 'Escape' });
+  assert.equal(doc.querySelector('.search-palette').hidden, true);
+  assert.equal(doc.activeElement, doc.querySelector('.search-open'));
+  dom.window.close();
+});
+
+test('el botón de búsqueda aparece también en los codelabs independientes', async () => {
+  const { dom, doc } = await load('codelab-09.html');
+  const button = doc.querySelector('.search-open');
+  assert.ok(button);
+  assert.equal(button.nextElementSibling, doc.querySelector('.theme-toggle'));
+  dom.window.close();
+});
+
+test('muestra Continuar cuando hay una posición guardada', async () => {
+  const saved = await load('index.html', { storage: { curso_flutter_last: '{"session":7,"step":5,"ts":1}' } });
+  const link = saved.doc.querySelector('.resume-banner a');
+  assert.equal(link.getAttribute('href'), 'sesion-07.html#paso-5');
+  assert.match(saved.doc.querySelector('.resume-banner').textContent, /Sesión 7 · paso 5/);
+  saved.dom.window.close();
+  const empty = await load('codelabs.html');
+  assert.equal(empty.doc.querySelector('.resume-banner'), null);
+  empty.dom.window.close();
+});
+
+test('al abrir sesion-07.html#paso-3 se desplaza al paso tras la carga asíncrona', async () => {
+  const { dom, scrolled } = await load(page(7), { hash: '#paso-3' });
+  assert.ok(scrolled.includes('paso-3'));
   dom.window.close();
 });
