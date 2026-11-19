@@ -27,3 +27,30 @@ La verificación funcional usa un DOM con jsdom. No se realizó una inspección 
 ## Mejoras visuales posteriores
 
 A petición del usuario, se añadieron transiciones de color de 280 ms, una mezcla de los degradados de portada de 320 ms y un cambio animado del icono de tema. Se habilitan después del primer dibujo para conservar la carga inicial sin destellos. Los enlaces de navegación incorporan un subrayado al interactuar; los bloques de código y los controles tienen un foco de teclado más claro. Las tarjetas solo reciben un cambio sutil de borde al pasar el cursor. La preferencia `prefers-reduced-motion` desactiva las transiciones, las animaciones y el desplazamiento suave, incluidas las reglas originales. Estos ajustes se concentran en `theme.css` y `theme.js`; se mantienen los 39 archivos originales verificados.
+
+## Mejoras de experiencia y contraste (19 de noviembre de 2026)
+
+Diseño y plan: `docs/superpowers/specs/2026-11-19-mejoras-diseno-calidad-de-vida-design.md` y `docs/superpowers/plans/2026-11-19-mejoras-diseno-calidad-de-vida.md`.
+
+- **Capa separada.** `enhancements.css` y `enhancements.js` se cargan en las 32 páginas, después del tema. `verify_content.py` reconoce el bloque de integración completo.
+- **Excepción a la regla de archivos idénticos.** `codelab-navigation.js` tenía desfasados los títulos de las sesiones 9 a 12 y 16 respecto a `app.js`; por ejemplo, la 12 y la 13 se llamaban igual. Se alinearon con `app.js` y el nuevo hash queda registrado con su motivo en `tests/original-content.json`. Los otros 38 archivos siguen idénticos.
+- **Finales de línea.** Con `core.autocrlf=true`, Windows convertía los archivos a CRLF y `verify_content.py` fallaba aunque el contenido era el mismo. `.gitattributes` fija `eol=lf`.
+- **Desbordamiento en móviles.** A 390 px, 14 páginas del original desbordaban en horizontal: bloques de código dentro de cuadrículas sin `min-width: 0` y rutas largas en código en línea. Tras la corrección, ninguna de las 32 páginas desborda a 390 px ni a 1440 px.
+
+### Contraste del modo oscuro
+
+Medido en Chrome con `scripts/contrast-audit.js` sobre los 11 522 nodos de texto de las 32 páginas, con todos los codelabs y detalles desplegados, la paleta de búsqueda abierta y progreso guardado. Se tomó el peor color de cada degradado.
+
+| | Antes | Después |
+|---|---|---|
+| Textos por debajo de AA (4.5:1, o 3:1 en texto grande) | 130 | 0 |
+| Textos de tamaño normal por debajo de 7:1 | 523 | 0 en las cabeceras, que eran el caso restante |
+| Peor caso | 1.91:1 (insignia «3 HORAS», menta sobre lila) | ≥ 7.35:1 en las páginas auditadas tras el último ajuste |
+
+Causas principales: en oscuro `--purple` se aclaraba a `#a69dff`, pero seguía usándose como fondo de texto blanco en insignias, marca y botón principal. Los degradados de las cabeceras de codelab y sesión terminaban en un verde azulado claro (`#41777c`), y los comentarios de código quedaban en 4.46:1. Ahora los rellenos usan `--purple-fill` (`#3b32a8`), los degradados son más profundos y `--muted`/`--purple` son algo más claros.
+
+El modo claro no se modificó porque conserva el diseño original. La misma auditoría encuentra allí 181 textos por debajo de AA, todos heredados del original: las cabeceras sobre `#41777c`, el morado `#6257e9` sobre fondos lila claro y los comentarios de código.
+
+### Verificación
+
+`npm test` ejecuta 25 pruebas (8 del sitio y 17 de las mejoras). Cubren el progreso, los datos corruptos, el almacenamiento bloqueado, la sincronización entre pestañas, la carga asíncrona de las sesiones, la píldora, la búsqueda, los atajos (ignorados mientras se escribe), el paginador en las sesiones 1 y 16, el aviso de continuar y la impresión. Se revisaron visualmente en Chrome la portada, `sesion-05` y `sesion-07`, en claro y oscuro, a 390 y 1440 px, sin errores de consola. La hoja de impresión se revisó en código, no en una vista previa de impresión.

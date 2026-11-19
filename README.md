@@ -1,10 +1,29 @@
 # Curso Flutter — Codelab
 
-Versión del [codelab original de epanchanaf](https://epanchanaf.github.io/curso-flutter/) con el mismo contenido y diseño claro, más un selector de modo oscuro.
+Versión del [codelab original de epanchanaf](https://epanchanaf.github.io/curso-flutter/) con el mismo contenido y diseño claro, más un modo oscuro con contraste AA y mejoras para seguir los laboratorios.
 
 **Sitio publicado:** https://dumarmatamoros.github.io/curso-flutter-codelab/
 
 El curso contiene **8 semanas, 16 sesiones y 40 horas**, con los laboratorios completos y el proyecto integrador TaskFlow. El selector de tema está disponible también en móviles, recuerda la elección y sigue la preferencia del sistema mientras no se elija un tema manualmente. Los colores y el icono de sol/luna cambian suavemente, sin animar la carga inicial. Los enlaces, el código y el foco de teclado incluyen detalles visuales discretos. La preferencia de movimiento reducido desactiva las animaciones y el desplazamiento suave.
+
+## Mejoras para seguir los codelabs
+
+- **Progreso por paso:** cada paso tiene una casilla *Hecho*; la cabecera muestra `N/M pasos` y el menú lateral marca las sesiones empezadas (•) y terminadas (✓). Se guarda en el navegador.
+- **Continuar donde lo dejaste:** la portada y el índice de codelabs enlazan a la última sesión y paso visitados.
+- **Navegador de pasos:** una píldora fija («Paso 3 · 4/9») abre la lista de pasos del codelab.
+- **Barra de lectura y botón para volver arriba.**
+- **Anterior / Siguiente sesión** al final de cada sesión.
+- **Búsqueda rápida** de sesiones por número, título u objetivo, sin importar acentos.
+- **Impresión/PDF limpia:** sin menús ni botones, en colores claros y con las explicaciones desplegadas.
+- **Modo oscuro con contraste AA:** todo el texto supera 4.5:1 y el texto de cuerpo 7:1.
+- **Sin desbordamiento horizontal en móviles.**
+
+| Atajo | Acción |
+|---|---|
+| `/` | Abrir la búsqueda |
+| `↑` `↓` `Enter` | Elegir y abrir un resultado |
+| `Esc` | Cerrar la búsqueda o la lista de pasos |
+| `←` `→` | Sesión anterior / siguiente (en las páginas de sesión) |
 
 ## Desarrollo local
 
@@ -37,4 +56,6 @@ Consulta [AUDITORIA_MIGRACION.md](AUDITORIA_MIGRACION.md) para ver los fallos en
 
 GitHub Pages publica la rama `main`, carpeta `/(root)`. Basta con subir los archivos: no hace falta ejecutar `npm install` ni compilar para publicar o usar el sitio.
 
-Las hojas `styles.css` y `codelab-navigation.css` conservan el diseño original. `theme.css` y `theme.js` implementan el selector y los colores oscuros. Todas las páginas incluyen ambos archivos de tema.
+Las hojas `styles.css` y `codelab-navigation.css` conservan el diseño original. `theme.css` y `theme.js` implementan el selector y los colores oscuros; `enhancements.css` y `enhancements.js`, las mejoras de experiencia. Todas las páginas incluyen los cuatro archivos, así que los cambios del repositorio original pueden incorporarse sin conflictos.
+
+`scripts/contrast-audit.js` es una auditoría de contraste WCAG para ejecutar en la consola del navegador (`auditContrast()`).
