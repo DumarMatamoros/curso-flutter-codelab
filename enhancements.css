@@ -416,3 +416,20 @@
   .step-number { background: #000 !important; color: #fff !important; print-color-adjust: exact; }
   a[href^="http"]::after { content: " (" attr(href) ")"; font-size: .8em; color: #333; }
 }
+.search-close {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: 700 .8rem Manrope, Arial, sans-serif;
+  cursor: pointer;
+}
+.search-close:hover { border-color: var(--enh-accent); color: var(--enh-accent); }
+
+/* Corrige un desbordamiento horizontal del original en móviles: en la cuadrícula de .lab-step
+   los bloques de código largos ensanchaban la columna 1fr; ahora desplazan dentro del <pre>. */
+.lab-step > *, .codelab-layout > *, .codelab-content, .spec-section > * { min-width: 0; }
+pre { max-width: 100%; overflow-x: auto; }
+:where(p, li, dd, td, th, h2, h3) > code { overflow-wrap: anywhere; }

@@ -234,3 +234,14 @@ test('beforeprint abre los details y afterprint restaura su estado', async () =>
   assert.deepEqual(details.map((d) => d.open), before);
   dom.window.close();
 });
+
+test('la búsqueda tiene un botón Cerrar para pantallas táctiles', async () => {
+  const { dom, doc } = await load('index.html');
+  doc.querySelector('.search-open').click();
+  const close = doc.querySelector('.search-palette button.search-close');
+  assert.ok(close, 'falta el botón Cerrar');
+  assert.equal(close.textContent.trim(), 'Cerrar');
+  close.click();
+  assert.equal(doc.querySelector('.search-palette').hidden, true);
+  dom.window.close();
+});

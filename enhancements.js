@@ -474,10 +474,10 @@
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           <input type="search" placeholder="Buscar sesión, tema o número…" autocomplete="off" spellcheck="false"
             role="combobox" aria-expanded="true" aria-controls="search-results" aria-autocomplete="list" aria-label="Buscar sesiones">
-          <kbd>Esc</kbd>
+          <button type="button" class="search-close">Cerrar</button>
         </div>
         <ul id="search-results" class="search-results" role="listbox" aria-label="Resultados"></ul>
-        <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>Enter</kbd> abrir · <kbd>←</kbd><kbd>→</kbd> sesión anterior/siguiente</p>
+        <p class="search-hint"><kbd>↑</kbd><kbd>↓</kbd> elegir · <kbd>Enter</kbd> abrir · <kbd>Esc</kbd> cerrar · <kbd>←</kbd><kbd>→</kbd> sesión anterior/siguiente</p>
       </div>`;
     document.body.append(palette);
     const input = palette.querySelector('input');
@@ -533,13 +533,16 @@
         event.preventDefault();
         if (results[selected]) api.navigate(sessionUrl(results[selected].number));
       } else if (event.key === 'Tab') {
-        event.preventDefault(); // el único control enfocable es el campo: se mantiene el foco dentro
+        // Foco atrapado: alterna entre el campo y el botón Cerrar.
+        event.preventDefault();
+        (document.activeElement === input ? palette.querySelector('.search-close') : input).focus();
       }
       event.stopPropagation();
     });
     palette.addEventListener('click', (event) => {
       if (event.target === palette) closePalette();
     });
+    palette.querySelector('.search-close').addEventListener('click', closePalette);
     palette.render = render;
   }
 
