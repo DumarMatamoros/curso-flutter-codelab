@@ -3,11 +3,11 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --ink: #eef2fb;
-  --muted: #a5b4cc;
+  --muted: #b8c4da;
   --paper: #0b0f19;
   --cloud: #0f1422;
   --line: #303b55;
-  --purple: #a69dff;
+  --purple: #b3abff;
   --mint: #b7f4d7;
   --dark: #070a13;
   --dark-panel: #131929;
@@ -167,3 +167,15 @@
   }
   .button:hover, .theme-toggle:active { transform: none; }
 }
+
+/* Contraste AA en modo oscuro (auditado con scripts/contrast-audit.js).
+   --purple se aclara en oscuro para texto; los rellenos con texto encima usan tonos profundos. */
+:root[data-theme="dark"] { --purple-fill: #3b32a8; --purple-fill-2: #463cc4; }
+:root[data-theme="dark"] :is(.session-badge, .brand-mark, .button-primary) { background: var(--purple-fill); color: #fff; }
+:root[data-theme="dark"] .button-primary:hover { background: var(--purple-fill-2); }
+:root[data-theme="dark"] .step-number { background: var(--purple-fill-2); }
+:root[data-theme="dark"] :is(.codelab-hero, .session-page-hero) { background: linear-gradient(118deg, #141734, #3a307f 56%, #22464a); }
+:root[data-theme="dark"] .spec-hero { background: linear-gradient(122deg, #15233e, #2f3c7a); }
+:root[data-theme="dark"] .challenge { background: linear-gradient(120deg, #2a2363, #3a307f); }
+:root[data-theme="dark"] .token-comment { color: #9aa6c4; }
+:root[data-theme="dark"] :is(.codelab-content, .explain, .learning-box, .callout) a:not([class]) { color: #c4bfff; }

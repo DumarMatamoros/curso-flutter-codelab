@@ -61,13 +61,19 @@
   function readLast() {
     const data = readJson(LAST_KEY);
     if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
-    const { session, step, ts } = data;
+    const { session, step, label, ts } = data;
     if (!Number.isInteger(session) || session < 1 || session > 16 || !Number.isInteger(step) || step < 1) return null;
-    return { session, step, ts: Number(ts) || 0 };
+    const last = { session, step, ts: Number(ts) || 0 };
+    if (typeof label === 'string' && /^[\w-]{1,6}$/.test(label)) last.label = label;
+    return last;
   }
 
-  function rememberPosition(session, step) {
-    writeJson(LAST_KEY, { session, step, ts: Date.now() });
+  // step es la posición (1..n, coincide con #paso-N); label es el número impreso en el paso,
+  // que en el curso empieza en 0 y puede repetirse o llevar letras ("4A").
+  function rememberPosition(session, step, label) {
+    const record = { session, step, ts: Date.now() };
+    if (label !== undefined) record.label = String(label);
+    writeJson(LAST_KEY, record);
   }
 
   // ---------- Codelabs ----------
@@ -85,6 +91,11 @@
 
   function stepsOf(section) {
     return Array.from(section.querySelectorAll('.lab-step'));
+  }
+
+  function stepLabel(step, index) {
+    const printed = step.querySelector('.step-number')?.textContent.trim();
+    return printed || String(index + 1);
   }
 
   function refreshSection(section) {
@@ -123,10 +134,10 @@
       label.className = 'step-done';
       label.innerHTML = '<input type="checkbox"><span>Hecho</span>';
       const box = label.querySelector('input');
-      box.setAttribute('aria-label', `Marcar paso ${number} como hecho`);
+      box.setAttribute('aria-label', `Marcar paso ${stepLabel(step, index)} como hecho`);
       box.addEventListener('change', () => {
         setStepDone(session, number, box.checked);
-        if (isSingleCodelabPage()) rememberPosition(session, number);
+        if (isSingleCodelabPage()) rememberPosition(session, number, stepLabel(step, index));
       });
       const content = step.querySelector('.step-number + *') || step;
       content.prepend(label);
@@ -152,7 +163,7 @@
         if (!entry.isIntersecting) return;
         const number = stepsOf(section).indexOf(entry.target) + 1;
         if (number > 0) {
-          rememberPosition(session, number);
+          rememberPosition(session, number, stepLabel(entry.target, number - 1));
           window.dispatchEvent(new CustomEvent('codelabstep', { detail: { session, step: number } }));
         }
       });
@@ -279,7 +290,10 @@
       const link = document.createElement('a');
       link.href = `#${step.id}`;
       const heading = step.querySelector('h3');
-      link.textContent = heading ? heading.textContent.trim() : `Paso ${index + 1}`;
+      const num = document.createElement('span');
+      num.className = 'step-pill-num';
+      num.textContent = stepLabel(step, index);
+      link.append(num, document.createTextNode(heading ? heading.textContent.trim() : `Paso ${index + 1}`));
       link.addEventListener('click', (event) => {
         event.preventDefault();
         close(false);
@@ -294,7 +308,8 @@
     nav.append(list, toggle);
 
     function setCurrent(number) {
-      toggle.innerHTML = `<span class="step-pill-label">Paso ${number} de ${steps.length}</span><span aria-hidden="true">▴</span>`;
+      const label = stepLabel(steps[number - 1], number - 1);
+      toggle.innerHTML = `<span class="step-pill-label">Paso ${label} · ${number}/${steps.length}</span><span aria-hidden="true">▴</span>`;
       list.querySelectorAll('a').forEach((link, index) => {
         if (index + 1 === number) link.setAttribute('aria-current', 'step');
         else link.removeAttribute('aria-current');
@@ -434,7 +449,7 @@
     banner.className = 'resume-banner container';
     banner.setAttribute('aria-label', 'Retomar el curso');
     banner.innerHTML = '<p><span class="resume-eyebrow">CONTINUAR DONDE LO DEJASTE</span><strong></strong><span class="resume-title"></span></p><a class="resume-link"></a>';
-    banner.querySelector('strong').textContent = `Sesión ${last.session} · paso ${last.step}`;
+    banner.querySelector('strong').textContent = `Sesión ${last.session} · paso ${last.label ?? last.step}`;
     banner.querySelector('.resume-title').textContent = session ? session.title : '';
     const link = banner.querySelector('a');
     link.href = `${sessionUrl(last.session)}#paso-${last.step}`;

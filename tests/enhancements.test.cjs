@@ -61,12 +61,12 @@ test('sesion-07 añade casillas tras la carga asíncrona', async () => {
   const boxes = doc.querySelectorAll('#detailed-codelab .lab-step input[type=checkbox]');
   assert.equal(boxes.length, steps.length);
   assert.equal(steps[0].id, 'paso-1');
-  assert.equal(boxes[0].getAttribute('aria-label'), 'Marcar paso 1 como hecho');
+  assert.equal(boxes[0].getAttribute('aria-label'), 'Marcar paso 0 como hecho'); // usa el número impreso en el paso
   boxes[0].click();
   assert.match(doc.querySelector('.step-progress').textContent, new RegExp(`1/${steps.length}`));
   assert.ok(steps[0].classList.contains('is-done'));
   assert.ok(doc.querySelector('.sidebar-week a[href="sesion-07.html"]').classList.contains('is-started'));
-  assert.deepEqual({ ...JSON.parse(win.localStorage.getItem('curso_flutter_last')), ts: 0 }, { session: 7, step: 1, ts: 0 });
+  assert.deepEqual({ ...JSON.parse(win.localStorage.getItem('curso_flutter_last')), ts: 0 }, { session: 7, step: 1, label: '0', ts: 0 });
   dom.window.close();
 });
 
@@ -106,11 +106,12 @@ test('la píldora lista los pasos y se abre con el botón', async () => {
   const links = pill.querySelectorAll('a[href^="#paso-"]');
   assert.equal(links.length, steps.length);
   const toggle = pill.querySelector('button');
-  assert.match(toggle.textContent, new RegExp(`Paso 1 de ${steps.length}`));
+  assert.match(toggle.textContent, new RegExp(`Paso 0 · 1/${steps.length}`));
   toggle.click();
   assert.equal(toggle.getAttribute('aria-expanded'), 'true');
   win.dispatchEvent(new win.CustomEvent('codelabstep', { detail: { session: 5, step: 3 } }));
-  assert.match(toggle.textContent, /Paso 3 de/);
+  assert.match(toggle.textContent, /Paso 2 · 3\//);
+  assert.match(links[2].textContent, /^2/);
   assert.equal(links[2].getAttribute('aria-current'), 'step');
   doc.activeElement.dispatchEvent(new win.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
   assert.equal(toggle.getAttribute('aria-expanded'), 'false');
@@ -205,6 +206,10 @@ test('muestra Continuar cuando hay una posición guardada', async () => {
   assert.equal(link.getAttribute('href'), 'sesion-07.html#paso-5');
   assert.match(saved.doc.querySelector('.resume-banner').textContent, /Sesión 7 · paso 5/);
   saved.dom.window.close();
+  const labelled = await load('index.html', { storage: { curso_flutter_last: '{"session":10,"step":6,"label":"4","ts":1}' } });
+  assert.match(labelled.doc.querySelector('.resume-banner').textContent, /Sesión 10 · paso 4/);
+  assert.equal(labelled.doc.querySelector('.resume-banner a').getAttribute('href'), 'sesion-10.html#paso-6');
+  labelled.dom.window.close();
   const empty = await load('codelabs.html');
   assert.equal(empty.doc.querySelector('.resume-banner'), null);
   empty.dom.window.close();
