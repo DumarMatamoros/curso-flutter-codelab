@@ -64,8 +64,19 @@
 .step-done:hover { border-color: var(--enh-accent); color: var(--ink); }
 .step-done:has(input:focus-visible) { outline: 3px solid var(--purple); outline-offset: 3px; }
 .lab-step.is-done .step-done { border-color: var(--enh-done); background: var(--enh-done-soft); color: var(--enh-done); }
-.lab-step.is-done .step-number { background: var(--enh-done); color: var(--enh-surface); font-size: 0; }
-.lab-step.is-done .step-number::before { content: "✓"; font-size: .95rem; }
+.lab-step.is-done .step-number { position: relative; background: var(--enh-done); color: transparent; }
+/* El ✓ cubre todo el círculo: el número original sigue en el DOM (lectores de pantalla) pero no desplaza el icono. */
+.lab-step.is-done .step-number::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 8px;
+  border-left: 2.5px solid var(--enh-surface);
+  border-bottom: 2.5px solid var(--enh-surface);
+  transform: translateY(-2px) rotate(-45deg);
+}
 .lab-step { scroll-margin-top: 24px; }
 
 .sidebar-week a { position: relative; }
