@@ -595,6 +595,8 @@
     }
     const current = currentSessionNumber();
     if (!current || event.shiftKey) return;
+    // Sólo sin foco en ningún control: las flechas también desplazan bloques de código y listas.
+    if (event.target !== document.body && event.target !== document.documentElement) return;
     if (event.key === 'ArrowLeft' && current > 1) api.navigate(sessionUrl(current - 1));
     if (event.key === 'ArrowRight' && current < 16) api.navigate(sessionUrl(current + 1));
   });

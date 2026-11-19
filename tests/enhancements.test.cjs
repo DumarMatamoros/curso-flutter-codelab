@@ -245,3 +245,22 @@ test('la búsqueda tiene un botón Cerrar para pantallas táctiles', async () =>
   assert.equal(doc.querySelector('.search-palette').hidden, true);
   dom.window.close();
 });
+
+test('las flechas no cambian de sesión con el foco en código, botones o enlaces', async () => {
+  const { dom, doc, win, navigated } = await load(page(7));
+  const pre = doc.querySelector('#detailed-codelab pre');
+  // syntax.js se inyecta de forma dinámica y jsdom no lo ejecuta: se reproduce su botón Copiar.
+  const copy = doc.querySelector('#detailed-codelab .code-copy') || pre.appendChild(Object.assign(doc.createElement('button'), { className: 'code-copy', textContent: 'Copiar' }));
+  pre.tabIndex = 0;
+  const pillLink = doc.querySelector('.step-pill a');
+  for (const target of [copy, pre, pillLink, doc.querySelector('.search-open')]) {
+    target.focus();
+    key(win, target, { key: 'ArrowRight' });
+    key(win, target, { key: 'ArrowLeft' });
+  }
+  assert.deepEqual(navigated, []);
+  doc.activeElement.blur();
+  key(win, doc.body, { key: 'ArrowLeft' });
+  assert.deepEqual(navigated, ['sesion-06.html']);
+  dom.window.close();
+});
